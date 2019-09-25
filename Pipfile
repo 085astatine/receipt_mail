@@ -7,6 +7,7 @@ verify_ssl = true
 
 [packages]
 imapclient = "*"
+pytz = "*"
 pyyaml = "*"
 
 [requires]
