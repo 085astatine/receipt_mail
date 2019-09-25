@@ -1,0 +1,11 @@
+host:
+username:
+password:
+since:
+    year:
+    month:
+    day:
+target:
+    bookwalker:
+        mailbox:
+        save_directory:
