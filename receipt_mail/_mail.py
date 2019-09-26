@@ -21,9 +21,7 @@ class Mail:
         return self._mail.get('Subject')
 
     def text(self) -> str:
-        return (self._mail
-                    .get_payload(decode=True)
-                    .decode(self._mail.get_content_charset()))
+        return self._mail.get_content()
 
     def date(self) -> datetime.datetime:
         return self._mail.get('Date').datetime
