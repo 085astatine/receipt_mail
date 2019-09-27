@@ -4,7 +4,7 @@ import datetime
 import email
 import email.message
 import email.policy
-from typing import Type, TypeVar
+from typing import List, Type, TypeVar
 import pathlib
 
 
@@ -20,8 +20,15 @@ class Mail:
     def subject(self) -> str:
         return self._mail.get('Subject')
 
+    def is_multipart(self) -> bool:
+        return self._mail.is_multipart()
+
     def text(self) -> str:
         return self._mail.get_content()
+
+    def text_list(self) -> List[str]:
+        return [part.get_content() for part in self._mail.walk()
+                if not part.is_multipart()]
 
     def date(self) -> datetime.datetime:
         return self._mail.get('Date').datetime
