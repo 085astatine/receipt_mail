@@ -34,7 +34,7 @@ class Receipt(NamedTuple):
 
     def is_consistent(self) -> bool:
         total_amount = (
-                sum(map(lambda x: x.price, self.items))
+                sum(item.price for item in self.items)
                 + self.discount
                 + self.tax)
         return (self.total_amount == total_amount
@@ -93,11 +93,10 @@ class Mail(MailBase):
             total_amount = _get_jpy(order, 'Total Amount')
             if total_amount is None:
                 total_amount = (
-                        sum(map(lambda x: x.price, items))
+                        sum(item.price for item in items)
                         + discount
                         + tax)
-            assert(total_amount
-                   == sum(map(lambda x: x.price, items)) + discount + tax)
+            assert total_amount == sum(x.price for x in items) + discount + tax
             # coin usage
             coin_usage = _get_jpy(order, r'Coin Usage \(1 Coin = JPY 1\)')
             if coin_usage is None:
