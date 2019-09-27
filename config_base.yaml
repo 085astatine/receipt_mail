@@ -9,3 +9,6 @@ target:
     bookwalker:
         mailbox:
         save_directory:
+    yodobashi:
+        mailbox:
+        save_directory:
