@@ -7,7 +7,7 @@ import imapclient
 import yaml
 
 
-if __name__ == '__main__':
+def main():
     config_path = pathlib.Path('config.yaml')
     with config_path.open() as config_file:
         config = yaml.load(
@@ -35,3 +35,7 @@ if __name__ == '__main__':
                         .joinpath('{0}'.format(message_id))
                         .open(mode='wb')) as mail_file:
                     mail_file.write(data[b'RFC822'])
+
+
+if __name__ == '__main__':
+    main()
