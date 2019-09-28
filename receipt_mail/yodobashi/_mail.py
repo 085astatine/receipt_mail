@@ -74,7 +74,6 @@ def _item_list(text) -> List[Item]:
 
 
 def _shipping(text: str) -> int:
-    result: List[Item] = []
     regex = re.compile(
             r'・配達料金：\s*(?P<price>[0-9,]+) 円',
             flags=re.DOTALL)
