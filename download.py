@@ -2,8 +2,6 @@
 # -*- coding: utf-8 -*-
 
 import datetime
-import email
-import email.policy
 import pathlib
 import imapclient
 import yaml
