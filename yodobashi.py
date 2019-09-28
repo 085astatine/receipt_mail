@@ -80,7 +80,7 @@ def to_csv(receipt):
     return '\n'.join(line)
 
 
-if __name__ == '__main__':
+def main():
     config_path = pathlib.Path('config.yaml')
     with config_path.open() as config_file:
         config = yaml.load(
@@ -107,3 +107,7 @@ if __name__ == '__main__':
     with open('yodobashi.csv', mode='w') as output_file:
         for receipt in receipt_list:
             output_file.write(to_csv(receipt))
+
+
+if __name__ == '__main__':
+    main()
