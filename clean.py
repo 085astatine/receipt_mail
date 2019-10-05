@@ -20,6 +20,8 @@ def main():
             directory.rmdir()
 
     target_list = [
+            'amazon.md',
+            'amazon.csv',
             'bookwalker.md',
             'bookwalker.csv',
             'yodobashi.md',
