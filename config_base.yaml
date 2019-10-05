@@ -6,6 +6,9 @@ since:
     month:
     day:
 target:
+    amazon:
+        mailbox:
+        save_directory:
     bookwalker:
         mailbox:
         save_directory:
