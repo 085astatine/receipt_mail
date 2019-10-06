@@ -24,6 +24,8 @@ def main():
             'amazon.csv',
             'bookwalker.md',
             'bookwalker.csv',
+            'melonbooks.md',
+            'melonbooks.csv',
             'yodobashi.md',
             'yodobashi.csv']
     for filename in target_list:
