@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 
 import pathlib
+import pytz
 import yaml
 import receipt_mail.amazon
 
@@ -31,9 +32,11 @@ def to_markdown(receipt):
     for item in receipt.items:
         prefix = '||||'
         if not line:
+            purchased_date = receipt.purchased_date.astimezone(
+                    tz=pytz.timezone('Asia/Tokyo'))
             prefix = (
                     '|{0.day}|{0.hour:02}:{0.minute:02}|Amazon|'
-                    .format(receipt.purchased_date))
+                    .format(purchased_date))
         line.append('{0}{1}|{2}|'.format(
                 prefix,
                 translate_name(item.name)
@@ -53,8 +56,10 @@ def to_markdown(receipt):
 def to_csv(receipt):
     # date,番号,説明,勘定項目,入金
     line = []
-    date = receipt.purchased_date.strftime('%Y-%m-%d')
-    number = receipt.purchased_date.strftime('%Y%m%d%H%M')
+    purchased_date = receipt.purchased_date.astimezone(
+            tz=pytz.timezone('Asia/Tokyo'))
+    date = purchased_date.strftime('%Y-%m-%d')
+    number = purchased_date.strftime('%Y%m%d%H%M')
     description = 'yodobashi.com'
     line.append('{0},{1},{2},{3},{4}'.format(
             date,
