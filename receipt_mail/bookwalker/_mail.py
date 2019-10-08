@@ -203,12 +203,13 @@ def _get_purchased_date(text: str) -> Optional[datetime.datetime]:
     return None
 
 
-def _to_jpy(text: str) -> Optional[int]:
+def _to_jpy(text: str) -> int:
     pattern = r'JPY (?P<value>(|-)[0-9,]+)(| \(\+Tax\))'
     match = re.match(pattern, text)
+    assert match
     if match:
         return int(match.group('value').replace(',', ''))
-    return None
+    return 0
 
 
 def _to_datetime(text: str) -> Optional[datetime.datetime]:
