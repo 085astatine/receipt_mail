@@ -32,11 +32,12 @@ def to_markdown(receipt):
     for item in receipt.items:
         prefix = '||||'
         if not line:
+            description = 'Amazon'
             purchased_date = receipt.purchased_date.astimezone(
                     tz=pytz.timezone('Asia/Tokyo'))
-            prefix = (
-                    '|{0.day}|{0.hour:02}:{0.minute:02}|Amazon|'
-                    .format(purchased_date))
+            prefix = '|{0.day}|{0.hour:02}:{0.minute:02}|{1}|'.format(
+                    purchased_date,
+                    description)
         line.append('{0}{1}|{2}|'.format(
                 prefix,
                 translate_name(item.name)
@@ -60,7 +61,7 @@ def to_csv(receipt):
             tz=pytz.timezone('Asia/Tokyo'))
     date = purchased_date.strftime('%Y-%m-%d')
     number = purchased_date.strftime('%Y%m%d%H%M')
-    description = 'yodobashi.com'
+    description = 'Amazon'
     line.append('{0},{1},{2},{3},{4}'.format(
             date,
             number,

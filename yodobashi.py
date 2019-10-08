@@ -32,11 +32,12 @@ def translate_name(name):
 def to_markdown(receipt):
     line = []
     for item in receipt.items:
+        description = 'yodobashi.com'
         prefix = '||||'
         if not line:
-            prefix = (
-                    '|{0.day}|{0.hour:02}:{0.minute:02}|yodonashi.com|'
-                    .format(receipt.purchased_date))
+            prefix = '|{0.day}|{0.hour:02}:{0.minute:02}|{1}|'.format(
+                    receipt.purchased_date,
+                    description)
         line.append('{0}{1}|{2}|'.format(
                 prefix,
                 translate_name(item.name)
@@ -81,13 +82,15 @@ def to_csv(receipt):
 
 
 def main():
+    category = 'yodobashi'
+
     config_path = pathlib.Path('config.yaml')
     with config_path.open() as config_file:
         config = yaml.load(
                 config_file,
                 Loader=yaml.SafeLoader)
 
-    directory = pathlib.Path(config['target']['yodobashi']['save_directory'])
+    directory = pathlib.Path(config['target'][category]['save_directory'])
     receipt_list = []
     for mail_file in directory.iterdir():
         mail = receipt_mail.yodobashi.Mail.read_file(mail_file)
@@ -97,14 +100,14 @@ def main():
     receipt_list.sort(key=lambda x: x.purchased_date)
 
     # markdown
-    with open('yodobashi.md', mode='w') as output_file:
+    with open('{0}.md'.format(category), mode='w') as output_file:
         for receipt in receipt_list:
             output_file.write('# {0}\n'.format(
                     receipt.purchased_date.strftime('%Y/%m/%d')))
             output_file.write(to_markdown(receipt))
 
     # csv
-    with open('yodobashi.csv', mode='w') as output_file:
+    with open('{0}.csv'.format(category), mode='w') as output_file:
         for receipt in receipt_list:
             output_file.write(to_csv(receipt))
 
