@@ -4,8 +4,8 @@ import datetime
 import email
 import email.message
 import email.policy
-from typing import List, Type, TypeVar
 import pathlib
+from typing import List, Type, TypeVar
 
 
 MailT = TypeVar('MailT', bound='Mail')
