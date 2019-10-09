@@ -1,8 +1,8 @@
 #!/usr/bin/env python
 
 import pathlib
-import yaml
 import receipt_mail.melonbooks
+import utility
 
 
 def translate_name(name):
@@ -87,36 +87,10 @@ def to_csv(receipt):
     return '\n'.join(line)
 
 
-def main():
-    category = 'melonbooks'
-
-    config_path = pathlib.Path('config.yaml')
-    with config_path.open() as config_file:
-        config = yaml.load(
-                config_file,
-                Loader=yaml.SafeLoader)
-
-    directory = pathlib.Path(config['target'][category]['save_directory'])
-    receipt_list = []
-    for mail_file in directory.iterdir():
-        mail = receipt_mail.melonbooks.Mail.read_file(mail_file)
-        if not mail.is_receipt():
-            continue
-        receipt_list.append(mail.receipt())
-    receipt_list.sort(key=lambda x: x.purchased_date)
-
-    # markdown
-    with open('{0}.md'.format(category), mode='w') as output_file:
-        for receipt in receipt_list:
-            output_file.write('# {0}\n'.format(
-                    receipt.purchased_date.strftime('%Y/%m/%d')))
-            output_file.write(to_markdown(receipt))
-
-    # csv
-    with open('{0}.csv'.format(category), mode='w') as output_file:
-        for receipt in receipt_list:
-            output_file.write(to_csv(receipt))
-
-
 if __name__ == '__main__':
-    main()
+    utility.summarize(
+            'melonbooks',
+            pathlib.Path('config.yaml'),
+            receipt_mail.melonbooks.Mail,
+            to_markdown,
+            to_csv)
