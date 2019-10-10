@@ -2,7 +2,7 @@
 
 import datetime
 import pathlib
-from typing import Callable, List, Optional, Type, TypeVar, cast
+from typing import Callable, Dict, List, Optional, Type, TypeVar, Union, cast
 from typing_extensions import Protocol
 import yaml
 
@@ -60,3 +60,25 @@ def summarize(
     with csv_path.open(mode='w') as output_file:
         for receipt in receipt_list:
             output_file.write(to_csv(cast(ReceiptT, receipt)))
+
+
+def fullwidth_to_halfwidth(string: str) -> str:
+    table: Dict[str, Union[int, str, None]] = {}
+    table.update(dict(zip(
+            (chr(ord('！') + i) for i in range(94)),
+            (chr(ord('!') + i) for i in range(94)))))
+    table.update({
+            '　': ' ',
+            '・': '･',
+            '「': '｢',
+            '」': '｣'})
+    return string.translate(str.maketrans(table))
+
+
+def escape_markdown_symbol(string: str) -> str:
+    symbol = r'*\_~'
+    table: Dict[str, Union[int, str, None]] = {}
+    table.update(dict(zip(
+            (char for char in symbol),
+            (r'\{0}'.format(char) for char in symbol))))
+    return string.translate(str.maketrans(table))

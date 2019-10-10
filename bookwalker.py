@@ -8,24 +8,10 @@ import utility
 
 
 def translate_title(name: str):
-    # 全角 -> 半角
-    table = {}
-    table.update(dict(zip(
-            (chr(ord('！') + i) for i in range(94)),
-            (chr(ord('!') + i) for i in range(94)))))
-    table.update({
-            '　': ' ',
-            '・': '･',
-            '「': '｢',
-            '」': '｣'})
-    name = name.translate(str.maketrans(table))
+    name = utility.fullwidth_to_halfwidth(name)
+    name = utility.escape_markdown_symbol(name)
     # '(N)' -> ' N'
     name = re.sub(r'\(([0-9]+)\)$', r' \g<1>', name)
-    # escape markdown symbol
-    escape_target = r'_*\~'
-    name = name.translate(str.maketrans(dict(zip(
-            (char for char in escape_target),
-            (r'\{0}'.format(char) for char in escape_target)))))
     # coin
     coin_match = re.match(
             r'BOOK☆WALKER 期間限定コイン (?P<coin>[0-9,]+)円分',
