@@ -22,10 +22,10 @@ def main():
     with imapclient.IMAPClient(host=config['host']) as client:
         client.login(config['username'], config['password'])
         for target in config['target'].values():
-            save_directory = pathlib.Path(target['save_directory'])
+            save_directory = pathlib.Path(target['workspace']).joinpath('mail')
             # directory
             if not save_directory.exists():
-                save_directory.mkdir()
+                save_directory.mkdir(parents=True)
             # get mail
             client.select_folder(target['mailbox'], readonly=True)
             target = client.search(['SINCE', since])

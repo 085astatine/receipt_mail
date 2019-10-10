@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 
 import pathlib
+import shutil
 import yaml
 
 
@@ -13,25 +14,9 @@ def main():
                 Loader=yaml.SafeLoader)
 
     for target in config['target'].values():
-        directory = pathlib.Path(target['save_directory'])
-        if directory.exists():
-            for mail_file in directory.iterdir():
-                mail_file.unlink()
-            directory.rmdir()
-
-    target_list = [
-            'amazon.md',
-            'amazon.csv',
-            'bookwalker.md',
-            'bookwalker.csv',
-            'melonbooks.md',
-            'melonbooks.csv',
-            'yodobashi.md',
-            'yodobashi.csv']
-    for filename in target_list:
-        path = pathlib.Path(filename)
-        if path.exists():
-            path.unlink()
+        workspace = pathlib.Path(target['workspace'])
+        if workspace.exists():
+            shutil.rmtree(workspace)
 
 
 if __name__ == '__main__':
