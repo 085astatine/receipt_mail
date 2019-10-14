@@ -26,7 +26,7 @@ def to_markdown(receipt):
                 if item.piece == 1
                 else '{0} x{1}'.format(
                         translate_name(item.name),
-                        item.pirce),
+                        item.piece),
                 item.price))
     if receipt.shipping != 0:
         line.append('||||送料|{0}|'.format(receipt.shipping))

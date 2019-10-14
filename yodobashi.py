@@ -30,7 +30,7 @@ def to_markdown(receipt):
                 if item.piece == 1
                 else '{0} x{1}'.format(
                         translate_name(item.name),
-                        item.pirce),
+                        item.piece),
                 item.price))
     line.append('')
     return '\n'.join(line)
@@ -51,7 +51,7 @@ def to_csv(receipt):
     if receipt.shipping != 0:
         line.append(',,,{0},{1}'.format(
                 'shipping',
-                - receipt.shipping))
+                receipt.shipping))
     if receipt.granted_point != 0:
         line.append(',,,{0},{1}'.format(
                 'point',
