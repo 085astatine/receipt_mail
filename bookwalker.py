@@ -8,6 +8,7 @@ import utility
 
 
 def translate_title(name: str):
+    name = utility.normalize(name)
     name = utility.fullwidth_to_halfwidth(name)
     name = utility.escape_markdown_symbol(name)
     # '(N)' -> ' N'

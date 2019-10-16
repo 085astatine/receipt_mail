@@ -2,6 +2,7 @@
 
 import datetime
 import pathlib
+import unicodedata
 from typing import Callable, Dict, List, Optional, Type, TypeVar, Union, cast
 from typing_extensions import Protocol
 import yaml
@@ -60,6 +61,13 @@ def summarize(
     with csv_path.open(mode='w') as output_file:
         for receipt in receipt_list:
             output_file.write(to_csv(cast(ReceiptT, receipt)))
+
+
+def normalize(string: str) -> str:
+    string = unicodedata.normalize('NFKC', string)
+    table: Dict[str, Union[int, str, None]] = {
+            '〜': '～'}
+    return string.translate(str.maketrans(table))
 
 
 def fullwidth_to_halfwidth(string: str) -> str:
