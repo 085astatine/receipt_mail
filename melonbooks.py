@@ -1,18 +1,19 @@
 #!/usr/bin/env python
 
 import pathlib
+from typing import List
 import receipt_mail.melonbooks
 import utility
 
 
-def translate_name(name):
+def translate_name(name: str) -> str:
     name = utility.fullwidth_to_halfwidth(name)
     name = utility.escape_markdown_symbol(name)
     return name
 
 
-def to_markdown(receipt):
-    line = []
+def to_markdown(receipt: receipt_mail.melonbooks.Receipt) -> str:
+    line: List[str] = []
     description = 'Melonbooks 通販'
     for item in receipt.items:
         prefix = '||||'
@@ -38,9 +39,9 @@ def to_markdown(receipt):
     return '\n'.join(line)
 
 
-def to_csv(receipt):
+def to_csv(receipt: receipt_mail.melonbooks.Receipt) -> str:
     # date,番号,説明,勘定項目,入金
-    line = []
+    line: List[str] = []
     date = receipt.purchased_date.strftime('%Y-%m-%d')
     number = receipt.purchased_date.strftime('%Y%m%d%H%M')
     description = 'Melonbooks 通販'

@@ -3,11 +3,12 @@
 
 import pathlib
 import re
+from typing import List
 import receipt_mail.yodobashi
 import utility
 
 
-def translate_name(name):
+def translate_name(name: str) -> str:
     name = utility.fullwidth_to_halfwidth(name)
     name = utility.escape_markdown_symbol(name)
     # remove indent
@@ -15,8 +16,8 @@ def translate_name(name):
     return name
 
 
-def to_markdown(receipt):
-    line = []
+def to_markdown(receipt: receipt_mail.yodobashi.Receipt) -> str:
+    line: List[str] = []
     for item in receipt.items:
         description = 'yodobashi.com'
         prefix = '||||'
@@ -36,9 +37,9 @@ def to_markdown(receipt):
     return '\n'.join(line)
 
 
-def to_csv(receipt):
+def to_csv(receipt: receipt_mail.yodobashi.Receipt) -> str:
     # date,番号,説明,勘定項目,入金
-    line = []
+    line: List[str] = []
     date = receipt.purchased_date.strftime('%Y-%m-%d')
     number = receipt.purchased_date.strftime('%Y%m%d%H%M')
     description = 'yodobashi.com'

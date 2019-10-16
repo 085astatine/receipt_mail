@@ -2,19 +2,20 @@
 # -*- coding: utf-8 -*-
 
 import pathlib
+from typing import List
 import pytz
 import receipt_mail.amazon
 import utility
 
 
-def translate_name(name):
+def translate_name(name: str) -> str:
     name = utility.fullwidth_to_halfwidth(name)
     name = utility.escape_markdown_symbol(name)
     return name
 
 
-def to_markdown(receipt):
-    line = []
+def to_markdown(receipt: receipt_mail.amazon.Receipt) -> str:
+    line: List[str] = []
     for item in receipt.items:
         prefix = '||||'
         if not line:
@@ -40,9 +41,9 @@ def to_markdown(receipt):
     return '\n'.join(line)
 
 
-def to_csv(receipt):
+def to_csv(receipt: receipt_mail.amazon.Receipt) -> str:
     # date,番号,説明,勘定項目,入金
-    line = []
+    line: List[str] = []
     purchased_date = receipt.purchased_date.astimezone(
             tz=pytz.timezone('Asia/Tokyo'))
     date = purchased_date.strftime('%Y-%m-%d')
