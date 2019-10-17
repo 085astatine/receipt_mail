@@ -4,6 +4,7 @@
 import pathlib
 import re
 from typing import List
+import pytz
 import receipt_mail.yodobashi
 import utility
 
@@ -16,25 +17,19 @@ def translate_name(name: str) -> str:
     return name
 
 
-def to_markdown(receipt: receipt_mail.yodobashi.Receipt) -> str:
-    line: List[str] = []
+def to_markdown(
+        receipt: receipt_mail.yodobashi.Receipt) -> utility.MarkdownRecord:
+    row_list: List[utility.MarkdownRow] = []
     for item in receipt.items:
-        description = 'yodobashi.com'
-        prefix = '||||'
-        if not line:
-            prefix = '|{0.day}|{0.hour:02}:{0.minute:02}|{1}|'.format(
-                    receipt.purchased_date,
-                    description)
-        line.append('{0}{1}|{2}|'.format(
-                prefix,
-                translate_name(item.name)
-                if item.piece == 1
-                else '{0} x{1}'.format(
-                        translate_name(item.name),
-                        item.piece),
-                item.price))
-    line.append('')
-    return '\n'.join(line)
+        name = translate_name(item.name)
+        if item.piece > 1:
+            name += ' x{0}'.format(item.piece)
+        row_list.append(utility.MarkdownRow(
+                name=name,
+                price=item.price))
+    return utility.MarkdownRecord(
+            description='yodobashi.com',
+            row_list=tuple(row_list))
 
 
 def to_csv(receipt: receipt_mail.yodobashi.Receipt) -> str:
@@ -74,4 +69,5 @@ if __name__ == '__main__':
             pathlib.Path('config.yaml'),
             receipt_mail.yodobashi.Mail,
             to_markdown,
-            to_csv)
+            to_csv,
+            timezone=pytz.timezone('Asia/Tokyo'))

@@ -14,31 +14,27 @@ def translate_name(name: str) -> str:
     return name
 
 
-def to_markdown(receipt: receipt_mail.amazon.Receipt) -> str:
-    line: List[str] = []
+def to_markdown(
+        receipt: receipt_mail.amazon.Receipt) -> utility.MarkdownRecord:
+    row_list: List[utility.MarkdownRow] = []
     for item in receipt.items:
-        prefix = '||||'
-        if not line:
-            description = 'Amazon'
-            purchased_date = receipt.purchased_date.astimezone(
-                    tz=pytz.timezone('Asia/Tokyo'))
-            prefix = '|{0.day}|{0.hour:02}:{0.minute:02}|{1}|'.format(
-                    purchased_date,
-                    description)
-        line.append('{0}{1}|{2}|'.format(
-                prefix,
-                translate_name(item.name)
-                if item.piece == 1
-                else '{0} x{1}'.format(
-                        translate_name(item.name),
-                        item.piece),
-                item.price))
+        name = translate_name(item.name)
+        if item.piece > 1:
+            name += ' x{0}'.format(item.piece)
+        row_list.append(utility.MarkdownRow(
+                name=name,
+                price=item.price))
     if receipt.shipping != 0:
-        line.append('||||送料･手数料|{0}|'.format(receipt.shipping))
+        row_list.append(utility.MarkdownRow(
+                name='送料･手数料',
+                price=receipt.shipping))
     if receipt.discount != 0:
-        line.append('||||割引|{0}|'.format(receipt.discount))
-    line.append('')
-    return '\n'.join(line)
+        row_list.append(utility.MarkdownRow(
+                name='割引',
+                price=receipt.discount))
+    return utility.MarkdownRecord(
+            description='Amazon',
+            row_list=tuple(row_list))
 
 
 def to_csv(receipt: receipt_mail.amazon.Receipt) -> str:
@@ -76,4 +72,5 @@ if __name__ == '__main__':
             pathlib.Path('config.yaml'),
             receipt_mail.amazon.Mail,
             to_markdown,
-            to_csv)
+            to_csv,
+            timezone=pytz.timezone('Asia/Tokyo'))
