@@ -32,35 +32,30 @@ def to_markdown(
             row_list=tuple(row_list))
 
 
-def to_csv(receipt: receipt_mail.yodobashi.Receipt) -> str:
-    # date,番号,説明,勘定項目,入金
-    line: List[str] = []
-    date = receipt.purchased_date.strftime('%Y-%m-%d')
-    number = receipt.purchased_date.strftime('%Y%m%d%H%M')
-    description = 'yodobashi.com'
-    line.append('{0},{1},{2},{3},{4}'.format(
-            date,
-            number,
-            description,
-            'item',
-            sum(item.price for item in receipt.items)))
+def to_gnucash(
+        receipt: receipt_mail.yodobashi.Receipt) -> utility.GnuCashRecord:
+    row_list: List[utility.GnuCashRow] = []
+    row_list.append(utility.GnuCashRow(
+            account='item',
+            value=sum(item.price for item in receipt.items)))
     if receipt.shipping != 0:
-        line.append(',,,{0},{1}'.format(
-                'shipping',
-                receipt.shipping))
+        row_list.append(utility.GnuCashRow(
+                account='shipping',
+                value=receipt.shipping))
     if receipt.granted_point != 0:
-        line.append(',,,{0},{1}'.format(
-                'point',
-                receipt.granted_point))
-    line.append(',,,{0},{1}'.format(
-            'payment',
-            - receipt.total_payment()))
+        row_list.append(utility.GnuCashRow(
+                account='point',
+                value=receipt.granted_point))
+    row_list.append(utility.GnuCashRow(
+            account='payment',
+            value=-receipt.total_payment()))
     if receipt.granted_point != 0:
-        line.append(',,,{0},{1}'.format(
-                'granted point',
-                - receipt.granted_point))
-    line.append('')
-    return '\n'.join(line)
+        row_list.append(utility.GnuCashRow(
+                account='granted point',
+                value=-receipt.granted_point))
+    return utility.GnuCashRecord(
+            description='yodobashi.com',
+            row_list=tuple(row_list))
 
 
 if __name__ == '__main__':
@@ -69,5 +64,5 @@ if __name__ == '__main__':
             pathlib.Path('config.yaml'),
             receipt_mail.yodobashi.Mail,
             to_markdown,
-            to_csv,
+            to_gnucash,
             timezone=pytz.timezone('Asia/Tokyo'))

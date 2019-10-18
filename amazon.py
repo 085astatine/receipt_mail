@@ -37,33 +37,26 @@ def to_markdown(
             row_list=tuple(row_list))
 
 
-def to_csv(receipt: receipt_mail.amazon.Receipt) -> str:
-    # date,番号,説明,勘定項目,入金
-    line: List[str] = []
-    purchased_date = receipt.purchased_date.astimezone(
-            tz=pytz.timezone('Asia/Tokyo'))
-    date = purchased_date.strftime('%Y-%m-%d')
-    number = purchased_date.strftime('%Y%m%d%H%M')
-    description = 'Amazon'
-    line.append('{0},{1},{2},{3},{4}'.format(
-            date,
-            number,
-            description,
-            'item',
-            sum(item.price for item in receipt.items)))
+def to_gnucash(
+        receipt: receipt_mail.amazon.Receipt) -> utility.GnuCashRecord:
+    row_list: List[utility.GnuCashRow] = []
+    row_list.append(utility.GnuCashRow(
+            account='item',
+            value=sum(item.price for item in receipt.items)))
     if receipt.shipping != 0:
-        line.append(',,,{0},{1}'.format(
-                'shipping',
-                receipt.shipping))
+        row_list.append(utility.GnuCashRow(
+                account='shipping',
+                value=receipt.shipping))
     if receipt.discount != 0:
-        line.append(',,,{0},{1}'.format(
-                'discount',
-                receipt.discount))
-    line.append(',,,{0},{1}'.format(
-            'payment',
-            - receipt.total_payment()))
-    line.append('')
-    return '\n'.join(line)
+        row_list.append(utility.GnuCashRow(
+                account='discount',
+                value=receipt.discount))
+    row_list.append(utility.GnuCashRow(
+            account='payment',
+            value=-receipt.total_payment()))
+    return utility.GnuCashRecord(
+            description='Amazon',
+            row_list=tuple(row_list))
 
 
 if __name__ == '__main__':
@@ -72,5 +65,5 @@ if __name__ == '__main__':
             pathlib.Path('config.yaml'),
             receipt_mail.amazon.Mail,
             to_markdown,
-            to_csv,
+            to_gnucash,
             timezone=pytz.timezone('Asia/Tokyo'))

@@ -61,12 +61,48 @@ def write_markdown(
                 is_head = False
 
 
+class GnuCashRow(NamedTuple):
+    account: str
+    value: int
+
+
+class GnuCashRecord(NamedTuple):
+    description: str
+    row_list: Tuple[GnuCashRow, ...]
+
+
+def write_gnucash_csv(
+        path: pathlib.Path,
+        receipt_list: List[ReceiptBase],
+        to_csv: Callable[[ReceiptT], GnuCashRecord],
+        timezone: Optional[datetime.tzinfo] = None) -> None:
+    with path.open(mode='w') as f:
+        last_number: Optional[str] = None
+        for receipt in receipt_list:
+            data = to_csv(cast(ReceiptT, receipt))
+            time = receipt.purchased_date.astimezone(tz=timezone)
+            is_head = True
+            date = time.strftime('%Y-%m-%d')
+            number = time.strftime('%Y%m%d%H%M')
+            if last_number is not None and last_number == number:
+                number += '#'
+            last_number = number
+            for row in data.row_list:
+                f.write('{0},{1},{2},{3},{4}\n'.format(
+                        date if is_head else '',
+                        number if is_head else '',
+                        data.description if is_head else '',
+                        row.account,
+                        row.value))
+                is_head = False
+
+
 def summarize(
         category: str,
         config_path: pathlib.Path,
         mail_class: Type[MailT],
         to_markdown: Callable[[ReceiptT], MarkdownRecord],
-        to_csv: Callable[[ReceiptT], str],
+        to_gnucash: Callable[[ReceiptT], GnuCashRecord],
         timezone: Optional[datetime.tzinfo] = None) -> None:
     # load config YAML
     with config_path.open() as config_file:
@@ -92,11 +128,12 @@ def summarize(
             receipt_list,
             to_markdown,
             timezone=timezone)
-    # csv
-    csv_path = workspace.joinpath('{0}.csv'.format(category))
-    with csv_path.open(mode='w') as output_file:
-        for receipt in receipt_list:
-            output_file.write(to_csv(cast(ReceiptT, receipt)))
+    # gnucash csv
+    write_gnucash_csv(
+            workspace.joinpath('{0}.csv'.format(category)),
+            receipt_list,
+            to_gnucash,
+            timezone=timezone)
 
 
 def normalize(string: str) -> str:
