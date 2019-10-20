@@ -90,7 +90,7 @@ def to_gnucach(
 
 
 if __name__ == '__main__':
-    utility.summarize(
+    utility.aggregate(
             'bookwalker',
             pathlib.Path('config.yaml'),
             receipt_mail.bookwalker.Mail,

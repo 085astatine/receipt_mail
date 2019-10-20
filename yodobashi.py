@@ -59,7 +59,7 @@ def to_gnucash(
 
 
 if __name__ == '__main__':
-    utility.summarize(
+    utility.aggregate(
             'yodobashi',
             pathlib.Path('config.yaml'),
             receipt_mail.yodobashi.Mail,

@@ -60,7 +60,7 @@ def to_gnucash(
 
 
 if __name__ == '__main__':
-    utility.summarize(
+    utility.aggregate(
             'amazon',
             pathlib.Path('config.yaml'),
             receipt_mail.amazon.Mail,

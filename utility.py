@@ -97,7 +97,7 @@ def write_gnucash_csv(
                 is_head = False
 
 
-def summarize(
+def aggregate(
         category: str,
         config_path: pathlib.Path,
         mail_class: Type[MailT],

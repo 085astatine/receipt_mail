@@ -72,7 +72,7 @@ def to_gnucash(
 
 
 if __name__ == '__main__':
-    utility.summarize(
+    utility.aggregate(
             'melonbooks',
             pathlib.Path('config.yaml'),
             receipt_mail.melonbooks.Mail,
