@@ -203,12 +203,13 @@ def _get_purchased_date(text: str) -> Optional[datetime.datetime]:
     return None
 
 
-def _to_jpy(text: str) -> Optional[int]:
+def _to_jpy(text: str) -> int:
     pattern = r'JPY (?P<value>(|-)[0-9,]+)(| \(\+Tax\))'
     match = re.match(pattern, text)
+    assert match
     if match:
         return int(match.group('value').replace(',', ''))
-    return None
+    return 0
 
 
 def _to_datetime(text: str) -> Optional[datetime.datetime]:
@@ -219,7 +220,7 @@ def _to_datetime(text: str) -> Optional[datetime.datetime]:
     match = re.match(pattern, text)
     if match:
         timezone_str = match.group('timezone')
-        timezone: Optional[datetime.timezone] = None
+        timezone: Optional[datetime.tzinfo] = None
         if timezone_str == 'JST':
             timezone = pytz.timezone('Asia/Tokyo')
         else:
@@ -234,6 +235,6 @@ def _to_datetime(text: str) -> Optional[datetime.datetime]:
                 hour=int(match.group('hour')),
                 minute=int(match.group('minute')))
         if timezone is not None:
-            return timezone.localize(result)
+            return result.astimezone(tz=timezone)
         return result
     return None

@@ -8,13 +8,13 @@ since:
 target:
     amazon:
         mailbox:
-        save_directory:
+        workspace:
     bookwalker:
         mailbox:
-        save_directory:
+        workspace:
     melonbooks:
         mailbox:
-        save_directory:
+        workspace:
     yodobashi:
         mailbox:
-        save_directory:
+        workspace:

@@ -14,7 +14,7 @@ class Item(NamedTuple):
 
 class Receipt(NamedTuple):
     order_id: str
-    items: Tuple[Item]
+    items: Tuple[Item, ...]
     shipping: int
     discount: int
     purchased_date: datetime.datetime

@@ -3,29 +3,18 @@
 
 import pathlib
 import re
-import yaml
+from typing import List
+import pytz
 import receipt_mail.bookwalker
+import utility
 
 
-def translate_title(name: str):
-    # 全角 -> 半角
-    table = {}
-    table.update(dict(zip(
-            (chr(ord('！') + i) for i in range(94)),
-            (chr(ord('!') + i) for i in range(94)))))
-    table.update({
-            '　': ' ',
-            '・': '･',
-            '「': '｢',
-            '」': '｣'})
-    name = name.translate(str.maketrans(table))
+def translate_title(name: str) -> str:
+    name = utility.normalize(name)
+    name = utility.fullwidth_to_halfwidth(name)
+    name = utility.escape_markdown_symbol(name)
     # '(N)' -> ' N'
     name = re.sub(r'\(([0-9]+)\)$', r' \g<1>', name)
-    # escape markdown symbol
-    escape_target = r'_*\~'
-    name = name.translate(str.maketrans(dict(zip(
-            (char for char in escape_target),
-            (r'\{0}'.format(char) for char in escape_target)))))
     # coin
     coin_match = re.match(
             r'BOOK☆WALKER 期間限定コイン (?P<coin>[0-9,]+)円分',
@@ -36,106 +25,75 @@ def translate_title(name: str):
     return name
 
 
-def to_markdown(receipt):
-    line = []
+def to_markdown(
+        receipt: receipt_mail.bookwalker.Receipt) -> utility.MarkdownRecord:
+    row_list: List[utility.MarkdownRow] = []
     for item in receipt.items:
-        prefix = '||||'
-        if not line:
-            prefix = (
-                    '|{0.day}|{0.hour:02}:{0.minute:02}|BOOK☆WALKER|'
-                    .format(receipt.purchased_date))
-        line.append('{0}{1}|{2}|'.format(
-                prefix,
-                translate_title(item.name)
-                if item.piece == 1
-                else '{0} x{1}'.format(
-                        translate_title(item.name),
-                        item.piece),
-                item.price))
+        name = translate_title(item.name)
+        if item.piece > 1:
+            name += ' x{0}'.format(item.piece)
+        row_list.append(utility.MarkdownRow(
+                name=name,
+                price=item.price))
     if receipt.tax != 0:
-        line.append('||||消費税|{0}|'.format(receipt.tax))
+        row_list.append(utility.MarkdownRow(
+                name='消費税',
+                price=receipt.tax))
     if receipt.coin_usage != 0:
-        line.append('||||コイン利用|{0}|'.format(receipt.coin_usage))
-    line.append('')
-    return '\n'.join(line)
+        row_list.append(utility.MarkdownRow(
+                name='コイン利用',
+                price=receipt.coin_usage))
+    return utility.MarkdownRecord(
+            description='BOOK☆WALKER',
+            row_list=tuple(row_list))
 
 
-def to_csv(receipt):
-    # date,番号,説明,勘定項目,入金
-    line = []
-    date = receipt.purchased_date.strftime('%Y-%m-%d')
-    number = receipt.purchased_date.strftime('%Y%m%d%H%M')
+def to_gnucach(
+        receipt: receipt_mail.bookwalker.Receipt) -> utility.GnuCashRecord:
+    row_list: List[utility.GnuCashRow] = []
     description = (
             'BOOK☆WALKER'
             if receipt.type is not receipt_mail.bookwalker.ReceiptType.COIN
             else 'BOOK☆WALKER コイン購入')
     if receipt.type is receipt_mail.bookwalker.ReceiptType.COIN:
-        line.append('{0},{1},{2},{3},{4}'.format(
-                date,
-                number,
-                description,
-                'coin',
-                receipt.total_amount + sum(receipt.granted_coin)))
-        line.append(',,,{0},{1}'.format(
-                'payment',
-                - receipt.total_amount))
-        line.append(',,,{0},{1}'.format(
-                'granted coin',
-                - sum(receipt.granted_coin)))
+        row_list.append(utility.GnuCashRow(
+                account='coin',
+                value=receipt.total_amount + sum(receipt.granted_coin)))
+        row_list.append(utility.GnuCashRow(
+                account='payment',
+                value=-receipt.total_amount))
+        row_list.append(utility.GnuCashRow(
+                account='granted coin',
+                value=-sum(receipt.granted_coin)))
     else:
-        line.append('{0},{1},{2},{3},{4}'.format(
-                date,
-                number,
-                description,
-                'book',
-                receipt.total_amount))
-        line.append(',,,{0},{1}'.format(
-                'coin',
-                sum(receipt.granted_coin)))
+        row_list.append(utility.GnuCashRow(
+                account='book',
+                value=receipt.total_amount))
+        row_list.append(utility.GnuCashRow(
+                account='coin',
+                value=sum(receipt.granted_coin)))
         if receipt.total_payment != 0:
-            line.append(',,,{0},{1}'.format(
-                    'payment',
-                    - receipt.total_payment))
+            row_list.append(utility.GnuCashRow(
+                    account='payment',
+                    value=-receipt.total_payment))
         if receipt.coin_usage != 0:
-            line.append(',,,{0},{1}'.format(
-                    'coin',
-                    receipt.coin_usage))
+            row_list.append(utility.GnuCashRow(
+                    account='coin',
+                    value=receipt.coin_usage))
         for granted_coin in (receipt.granted_coin or (0,)):
-            line.append(',,,{0},{1}'.format(
-                    'granted coin',
-                    - granted_coin))
-    line.append('')
-    return '\n'.join(line)
-
-
-def main():
-    config_path = pathlib.Path('config.yaml')
-    with config_path.open() as config_file:
-        config = yaml.load(
-                config_file,
-                Loader=yaml.SafeLoader)
-
-    directory = pathlib.Path(config['target']['bookwalker']['save_directory'])
-    receipt_list = []
-    for mail_file in directory.iterdir():
-        mail = receipt_mail.bookwalker.Mail.read_file(mail_file)
-        if not mail.is_receipt():
-            continue
-        receipt_list.append(mail.receipt())
-    receipt_list.sort(key=lambda x: x.purchased_date)
-
-    # markdown
-    with open('bookwalker.md', mode='w') as output_file:
-        for receipt in receipt_list:
-            output_file.write('# {0}\n'.format(
-                    receipt.purchased_date.strftime("%Y/%m/%d")))
-            output_file.write(to_markdown(receipt))
-
-    # csv
-    with open('bookwalker.csv', mode='w') as output_file:
-        for receipt in receipt_list:
-            output_file.write(to_csv(receipt))
+            row_list.append(utility.GnuCashRow(
+                    account='granted coin',
+                    value=-granted_coin))
+    return utility.GnuCashRecord(
+            description=description,
+            row_list=tuple(row_list))
 
 
 if __name__ == '__main__':
-    main()
+    utility.aggregate(
+            'bookwalker',
+            pathlib.Path('config.yaml'),
+            receipt_mail.bookwalker.Mail,
+            to_markdown,
+            to_gnucach,
+            timezone=pytz.timezone('Asia/Tokyo'))
