@@ -26,20 +26,17 @@ class Receipt(NamedTuple):
     items: Tuple[Item, ...]
     discount: int
     tax: int
-    total_amount: int
     coin_usage: int
-    total_payment: int
     granted_coin: Tuple[int, ...]
     purchased_date: datetime.datetime
 
-    def is_consistent(self) -> bool:
-        total_amount = (
-                sum(item.price for item in self.items)
+    def total_amount(self) -> int:
+        return (sum(item.price for item in self.items)
                 + self.discount
                 + self.tax)
-        return (self.total_amount == total_amount
-                and self.total_payment == self.total_amount + self.coin_usage)
 
+    def total_payment(self) -> int:
+        return self.total_amount() + self.coin_usage
 
 class Mail(MailBase):
     def order(self) -> Optional[str]:
@@ -89,21 +86,10 @@ class Mail(MailBase):
             tax = _get_jpy(order, 'Tax')
             if tax is None:
                 tax = 0
-            # total amount
-            total_amount = _get_jpy(order, 'Total Amount')
-            if total_amount is None:
-                total_amount = (
-                        sum(item.price for item in items)
-                        + discount
-                        + tax)
-            assert total_amount == sum(x.price for x in items) + discount + tax
             # coin usage
             coin_usage = _get_jpy(order, r'Coin Usage \(1 Coin = JPY 1\)')
             if coin_usage is None:
                 coin_usage = 0
-            # total payment
-            total_payment = _get_jpy(order, 'Total Payment')
-            assert total_payment == total_amount + coin_usage
             # granted coin
             granted_coin = _get_granted_coin(order)
             # purchased date
@@ -115,12 +101,16 @@ class Mail(MailBase):
                     items=tuple(items),
                     discount=discount,
                     tax=tax,
-                    total_amount=total_amount,
                     coin_usage=coin_usage,
-                    total_payment=total_payment,
                     granted_coin=tuple(granted_coin),
                     purchased_date=purchased_date)
-            assert result.is_consistent()
+            # total amount
+            total_amount = _get_jpy(order, 'Total Amount')
+            if total_amount is not None:
+                assert result.total_amount() == total_amount
+            # total payment
+            total_payment = _get_jpy(order, 'Total Payment')
+            assert result.total_payment() == total_payment
             return result
         return None
 
