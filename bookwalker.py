@@ -18,6 +18,8 @@ def translate_title(name: str) -> str:
     name = name.strip()
     # '(N)' -> ' N'
     name = re.sub(r'\(([0-9]+)\)$', r' \g<1>', name)
+    # ': N' -> ' N'
+    name = re.sub(r': ([0-9]+)$', r' \g<1>', name)
     # coin
     coin_match = re.match(
             r'BOOK☆WALKER 期間限定コイン (?P<coin>[0-9,]+)円分',
