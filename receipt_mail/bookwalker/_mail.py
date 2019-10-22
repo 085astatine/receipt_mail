@@ -94,12 +94,14 @@ class Mail(MailBase):
             coin_usage = _get_jpy(order, r'Coin Usage \(1 Coin = JPY 1\)')
             if coin_usage is None:
                 coin_usage = 0
-            # granted coin
-            granted_coin = _get_granted_coin(order)
             # purchased date
             purchased_date = _get_purchased_date(order)
             if purchased_date is None:
                 purchased_date = self.date()
+            # granted coin
+            granted_coin = _get_granted_coin(
+                    order,
+                    purchased_date)
             result = Receipt(
                     type=type_,
                     items=tuple(items),
@@ -161,7 +163,47 @@ def _get_jpy(text: str, key: str) -> Optional[int]:
     return None
 
 
-def _get_granted_coin(text: str) -> List[int]:
+def _get_granted_coin(
+        text: str,
+        purchased_date: datetime.datetime) -> List[int]:
+    if purchased_date < datetime.datetime(
+            2019, 3, 27, 13, 00).astimezone(tz=pytz.timezone('Asia/Tokyo')):
+        return _get_granted_coin_20190327(text)
+    return _get_granted_coin_latest(text)
+
+
+def _get_granted_coin_20190327(text: str) -> List[int]:
+    result: List[int] = []
+    # granted coin
+    granted_regex = re.compile(
+            r'■Granted Coin\(s\)\s*[:：]\s*(?P<total>[0-9,]+)\s*Coin\(s\)\n'
+            r'(?P<items>(\s+\*.+\s+Coin\(s\)\n)*)')
+    granted_match = granted_regex.search(text)
+    if granted_match:
+        text = granted_regex.sub('', text)
+        total_coin = int(granted_match.group('total').replace(',', ''))
+        limited_coin: List[int] = []
+        for line in granted_match.group('items').split('\n'):
+            item_match = re.match(
+                    r'\s+\*.+[:：]\s+(?P<coin>[0-9,]+)\s+Coin\(s\)',
+                    line)
+            if item_match:
+                limited_coin.append(
+                        int(item_match.group('coin').replace(',', '')))
+        normal_coin = total_coin - sum(limited_coin)
+        result.append(normal_coin)
+        result.extend(limited_coin)
+    # bonus
+    bonus_regex = re.compile(
+            r'■Bonus Coin\s*[:：]\s*(?P<value>[0-9,]+)\n')
+    bonus_match = bonus_regex.search(text)
+    if bonus_match:
+        text = bonus_regex.sub('', text)
+        result.append(int(bonus_match.group('value').replace(',', '')))
+    return result
+
+
+def _get_granted_coin_latest(text: str) -> List[int]:
     result: List[int] = []
     # granted coin
     granted_regex = re.compile(
