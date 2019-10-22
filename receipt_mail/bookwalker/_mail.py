@@ -119,7 +119,7 @@ def _get_item(text: str) -> List[Item]:
     result: List[Item] = []
     # book
     book_regex = re.compile(
-            r'■Item\s*(:|：)\s*(?P<name>.+)\n'
+            r'■(|Title / )Item\s*(:|：)\s*(?P<name>.+)\n'
             r'■Price\s*(:|：)\s*(?P<price>.+)\n')
     book_match = book_regex.search(text)
     while book_match:
@@ -162,14 +162,14 @@ def _get_granted_coin(text: str) -> List[int]:
     # granted coin
     granted_regex = re.compile(
             r'■Granted Coin\s*(:|：)\s*(?P<total>[0-9,]+)\scoins\n'
-            r'(?P<items>(　┗.+\n)*)')
+            r'(?P<items>(　[┗-].+\n)*)')
     granted_match = granted_regex.search(text)
     if granted_match:
         text = granted_regex.sub('', text)
         total = int(granted_match.group('total').replace(',', ''))
         for line in granted_match.group('items').split('\n'):
             item_match = re.match(
-                    r'\s+┗\s+(?P<coin>[0-9,]+)\s+coins\s+\(.+\)\s*[0-9]+%',
+                    r'\s+[┗-]\s+(?P<coin>[0-9,]+)\s+coins\s+\(.+\)\s*[0-9]+%',
                     line)
             if item_match:
                 result.append(int(item_match.group('coin').replace(',', '')))
