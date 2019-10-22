@@ -26,19 +26,20 @@ class Receipt(NamedTuple):
     items: Tuple[Item, ...]
     discount: int
     tax: int
-    total_amount: int
     coin_usage: int
-    total_payment: int
     granted_coin: Tuple[int, ...]
     purchased_date: datetime.datetime
 
-    def is_consistent(self) -> bool:
-        total_amount = (
-                sum(item.price for item in self.items)
+    def total_amount(self) -> int:
+        return (sum(item.price for item in self.items)
                 + self.discount
                 + self.tax)
-        return (self.total_amount == total_amount
-                and self.total_payment == self.total_amount + self.coin_usage)
+
+    def total_payment(self) -> int:
+        return self.total_amount() + self.coin_usage
+
+    def total_granted_coin(self) -> int:
+        return sum(self.granted_coin)
 
 
 class Mail(MailBase):
@@ -89,38 +90,33 @@ class Mail(MailBase):
             tax = _get_jpy(order, 'Tax')
             if tax is None:
                 tax = 0
-            # total amount
-            total_amount = _get_jpy(order, 'Total Amount')
-            if total_amount is None:
-                total_amount = (
-                        sum(item.price for item in items)
-                        + discount
-                        + tax)
-            assert total_amount == sum(x.price for x in items) + discount + tax
             # coin usage
             coin_usage = _get_jpy(order, r'Coin Usage \(1 Coin = JPY 1\)')
             if coin_usage is None:
                 coin_usage = 0
-            # total payment
-            total_payment = _get_jpy(order, 'Total Payment')
-            assert total_payment == total_amount + coin_usage
-            # granted coin
-            granted_coin = _get_granted_coin(order)
             # purchased date
             purchased_date = _get_purchased_date(order)
             if purchased_date is None:
                 purchased_date = self.date()
+            # granted coin
+            granted_coin = _get_granted_coin(
+                    order,
+                    purchased_date)
             result = Receipt(
                     type=type_,
                     items=tuple(items),
                     discount=discount,
                     tax=tax,
-                    total_amount=total_amount,
                     coin_usage=coin_usage,
-                    total_payment=total_payment,
                     granted_coin=tuple(granted_coin),
                     purchased_date=purchased_date)
-            assert result.is_consistent()
+            # total amount
+            total_amount = _get_jpy(order, 'Total Amount')
+            if total_amount is not None:
+                assert result.total_amount() == total_amount
+            # total payment
+            total_payment = _get_jpy(order, 'Total Payment')
+            assert result.total_payment() == total_payment
             return result
         return None
 
@@ -129,8 +125,8 @@ def _get_item(text: str) -> List[Item]:
     result: List[Item] = []
     # book
     book_regex = re.compile(
-            r'■Item\s*(:|：)\s*(?P<name>.+)\n'
-            r'■Price\s*(:|：)\s*(?P<price>.+)\n')
+            r'■(|Title / )Item\s*[:：]\s*(?P<name>.+)\n'
+            r'■Price\s*[:：]\s*(?P<price>.+)\n')
     book_match = book_regex.search(text)
     while book_match:
         text = book_regex.sub('', text, count=1)
@@ -141,10 +137,10 @@ def _get_item(text: str) -> List[Item]:
         book_match = book_regex.search(text)
     # coin
     coin_regex = re.compile(
-            r'■Item\s*(:|：)\s*(?P<name>BOOK☆WALKER 期間限定コイン .+)\n'
-            r'■Amount\s*(:|：)\s*(?P<amount>.+)\n')
+            r'■Item\s*[:：]\s*(?P<name>BOOK☆WALKER 期間限定コイン .+)\n'
+            r'■Amount\s*[:：]\s*(?P<amount>.+)\n')
     coin_price_regex = re.compile(
-            r'■Total Payment\s*(:|：)\s*(?P<price>.+)\n')
+            r'■Total Payment\s*[:：]\s*(?P<price>.+)\n')
     coin_match = coin_regex.search(text)
     if coin_match:
         text = coin_regex.sub('', text, count=1)
@@ -160,33 +156,73 @@ def _get_item(text: str) -> List[Item]:
 
 def _get_jpy(text: str, key: str) -> Optional[int]:
     match = re.search(
-            r'■{0}\s*(:|：)\s*(?P<value>.+)\n'.format(key),
+            r'■{0}\s*[:：]\s*(?P<value>.+)\n'.format(key),
             text)
     if match:
         return _to_jpy(match.group('value'))
     return None
 
 
-def _get_granted_coin(text: str) -> List[int]:
+def _get_granted_coin(
+        text: str,
+        purchased_date: datetime.datetime) -> List[int]:
+    if purchased_date < datetime.datetime(
+            2019, 3, 27, 13, 00).astimezone(tz=pytz.timezone('Asia/Tokyo')):
+        return _get_granted_coin_20190327(text)
+    return _get_granted_coin_latest(text)
+
+
+def _get_granted_coin_20190327(text: str) -> List[int]:
     result: List[int] = []
     # granted coin
     granted_regex = re.compile(
-            r'■Granted Coin\s*(:|：)\s*(?P<total>[0-9,]+)\scoins\n'
-            r'(?P<items>(　┗.+\n)*)')
+            r'■Granted Coin\(s\)\s*[:：]\s*(?P<total>[0-9,]+)\s*Coin\(s\)\n'
+            r'(?P<items>(\s+\*.+\s+Coin\(s\)\n)*)')
+    granted_match = granted_regex.search(text)
+    if granted_match:
+        text = granted_regex.sub('', text)
+        total_coin = int(granted_match.group('total').replace(',', ''))
+        limited_coin: List[int] = []
+        for line in granted_match.group('items').split('\n'):
+            item_match = re.match(
+                    r'\s+\*.+[:：]\s+(?P<coin>[0-9,]+)\s+Coin\(s\)',
+                    line)
+            if item_match:
+                limited_coin.append(
+                        int(item_match.group('coin').replace(',', '')))
+        normal_coin = total_coin - sum(limited_coin)
+        result.append(normal_coin)
+        result.extend(limited_coin)
+    # bonus
+    bonus_regex = re.compile(
+            r'■Bonus Coin\s*[:：]\s*(?P<value>[0-9,]+)\n')
+    bonus_match = bonus_regex.search(text)
+    if bonus_match:
+        text = bonus_regex.sub('', text)
+        result.append(int(bonus_match.group('value').replace(',', '')))
+    return result
+
+
+def _get_granted_coin_latest(text: str) -> List[int]:
+    result: List[int] = []
+    # granted coin
+    granted_regex = re.compile(
+            r'■Granted Coin\s*[:：]\s*(?P<total>[0-9,]+)\scoins\n'
+            r'(?P<items>(\s+[┗-].+\n)*)')
     granted_match = granted_regex.search(text)
     if granted_match:
         text = granted_regex.sub('', text)
         total = int(granted_match.group('total').replace(',', ''))
         for line in granted_match.group('items').split('\n'):
             item_match = re.match(
-                    r'\s+┗\s+(?P<coin>[0-9,]+)\s+coins\s+\(.+\)\s*[0-9]+%',
+                    r'\s+[┗-]\s+(?P<coin>[0-9,]+)\s+coins\s+\(.+\)\s*[0-9]+%',
                     line)
             if item_match:
                 result.append(int(item_match.group('coin').replace(',', '')))
         assert total == sum(result)
     # bonus
     bonus_regex = re.compile(
-            r'■Bonus Coin\s*(:|：)\s*(?P<value>[0-9,]+)\n')
+            r'■Bonus Coin\s*[:：]\s*(?P<value>[0-9,]+)\n')
     bonus_match = bonus_regex.search(text)
     if bonus_match:
         text = bonus_regex.sub('', text)
@@ -196,7 +232,7 @@ def _get_granted_coin(text: str) -> List[int]:
 
 def _get_purchased_date(text: str) -> Optional[datetime.datetime]:
     match = re.search(
-            r'■Purchased Date\s*(:|：)\s*(?P<value>.+)\n',
+            r'■Purchased Date\s*[:：]\s*(?P<value>.+)\n',
             text)
     if match:
         return _to_datetime(match.group('value'))

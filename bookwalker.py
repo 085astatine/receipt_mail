@@ -13,8 +13,13 @@ def translate_title(name: str) -> str:
     name = utility.normalize(name)
     name = utility.fullwidth_to_halfwidth(name)
     name = utility.escape_markdown_symbol(name)
+    # remove 【...】
+    name = re.sub(r'【.*?(電子|特典|OFF).*?】', '', name)
+    name = name.strip()
     # '(N)' -> ' N'
     name = re.sub(r'\(([0-9]+)\)$', r' \g<1>', name)
+    # ': N' -> ' N'
+    name = re.sub(r': ([0-9]+)$', r' \g<1>', name)
     # coin
     coin_match = re.match(
             r'BOOK☆WALKER 期間限定コイン (?P<coin>[0-9,]+)円分',
@@ -58,24 +63,24 @@ def to_gnucach(
     if receipt.type is receipt_mail.bookwalker.ReceiptType.COIN:
         row_list.append(utility.GnuCashRow(
                 account='coin',
-                value=receipt.total_amount + sum(receipt.granted_coin)))
+                value=receipt.total_amount() + receipt.total_granted_coin()))
         row_list.append(utility.GnuCashRow(
                 account='payment',
-                value=-receipt.total_amount))
+                value=-receipt.total_amount()))
         row_list.append(utility.GnuCashRow(
                 account='granted coin',
-                value=-sum(receipt.granted_coin)))
+                value=-receipt.total_granted_coin()))
     else:
         row_list.append(utility.GnuCashRow(
                 account='book',
-                value=receipt.total_amount))
+                value=receipt.total_amount()))
         row_list.append(utility.GnuCashRow(
                 account='coin',
-                value=sum(receipt.granted_coin)))
-        if receipt.total_payment != 0:
+                value=receipt.total_granted_coin()))
+        if receipt.total_payment() != 0:
             row_list.append(utility.GnuCashRow(
                     account='payment',
-                    value=-receipt.total_payment))
+                    value=-receipt.total_payment()))
         if receipt.coin_usage != 0:
             row_list.append(utility.GnuCashRow(
                     account='coin',
