@@ -63,20 +63,20 @@ def to_gnucach(
     if receipt.type is receipt_mail.bookwalker.ReceiptType.COIN:
         row_list.append(utility.GnuCashRow(
                 account='coin',
-                value=receipt.total_amount() + sum(receipt.granted_coin)))
+                value=receipt.total_amount() + receipt.total_granted_coin()))
         row_list.append(utility.GnuCashRow(
                 account='payment',
                 value=-receipt.total_amount()))
         row_list.append(utility.GnuCashRow(
                 account='granted coin',
-                value=-sum(receipt.granted_coin)))
+                value=-receipt.total_granted_coin()))
     else:
         row_list.append(utility.GnuCashRow(
                 account='book',
                 value=receipt.total_amount()))
         row_list.append(utility.GnuCashRow(
                 account='coin',
-                value=sum(receipt.granted_coin)))
+                value=receipt.total_granted_coin()))
         if receipt.total_payment() != 0:
             row_list.append(utility.GnuCashRow(
                     account='payment',

@@ -38,6 +38,10 @@ class Receipt(NamedTuple):
     def total_payment(self) -> int:
         return self.total_amount() + self.coin_usage
 
+    def total_granted_coin(self) -> int:
+        return sum(self.granted_coin)
+
+
 class Mail(MailBase):
     def order(self) -> Optional[str]:
         pattern = (
