@@ -123,8 +123,8 @@ def _get_item(text: str) -> List[Item]:
     result: List[Item] = []
     # book
     book_regex = re.compile(
-            r'■(|Title / )Item\s*(:|：)\s*(?P<name>.+)\n'
-            r'■Price\s*(:|：)\s*(?P<price>.+)\n')
+            r'■(|Title / )Item\s*[:：]\s*(?P<name>.+)\n'
+            r'■Price\s*[:：]\s*(?P<price>.+)\n')
     book_match = book_regex.search(text)
     while book_match:
         text = book_regex.sub('', text, count=1)
@@ -135,10 +135,10 @@ def _get_item(text: str) -> List[Item]:
         book_match = book_regex.search(text)
     # coin
     coin_regex = re.compile(
-            r'■Item\s*(:|：)\s*(?P<name>BOOK☆WALKER 期間限定コイン .+)\n'
-            r'■Amount\s*(:|：)\s*(?P<amount>.+)\n')
+            r'■Item\s*[:：]\s*(?P<name>BOOK☆WALKER 期間限定コイン .+)\n'
+            r'■Amount\s*[:：]\s*(?P<amount>.+)\n')
     coin_price_regex = re.compile(
-            r'■Total Payment\s*(:|：)\s*(?P<price>.+)\n')
+            r'■Total Payment\s*[:：]\s*(?P<price>.+)\n')
     coin_match = coin_regex.search(text)
     if coin_match:
         text = coin_regex.sub('', text, count=1)
@@ -154,7 +154,7 @@ def _get_item(text: str) -> List[Item]:
 
 def _get_jpy(text: str, key: str) -> Optional[int]:
     match = re.search(
-            r'■{0}\s*(:|：)\s*(?P<value>.+)\n'.format(key),
+            r'■{0}\s*[:：]\s*(?P<value>.+)\n'.format(key),
             text)
     if match:
         return _to_jpy(match.group('value'))
@@ -165,8 +165,8 @@ def _get_granted_coin(text: str) -> List[int]:
     result: List[int] = []
     # granted coin
     granted_regex = re.compile(
-            r'■Granted Coin\s*(:|：)\s*(?P<total>[0-9,]+)\scoins\n'
-            r'(?P<items>(　[┗-].+\n)*)')
+            r'■Granted Coin\s*[:：]\s*(?P<total>[0-9,]+)\scoins\n'
+            r'(?P<items>(\s+[┗-].+\n)*)')
     granted_match = granted_regex.search(text)
     if granted_match:
         text = granted_regex.sub('', text)
@@ -180,7 +180,7 @@ def _get_granted_coin(text: str) -> List[int]:
         assert total == sum(result)
     # bonus
     bonus_regex = re.compile(
-            r'■Bonus Coin\s*(:|：)\s*(?P<value>[0-9,]+)\n')
+            r'■Bonus Coin\s*[:：]\s*(?P<value>[0-9,]+)\n')
     bonus_match = bonus_regex.search(text)
     if bonus_match:
         text = bonus_regex.sub('', text)
@@ -190,7 +190,7 @@ def _get_granted_coin(text: str) -> List[int]:
 
 def _get_purchased_date(text: str) -> Optional[datetime.datetime]:
     match = re.search(
-            r'■Purchased Date\s*(:|：)\s*(?P<value>.+)\n',
+            r'■Purchased Date\s*[:：]\s*(?P<value>.+)\n',
             text)
     if match:
         return _to_datetime(match.group('value'))
