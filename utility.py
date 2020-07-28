@@ -23,6 +23,8 @@ class ReceiptBase(Protocol):
 
 
 class MailT(Protocol):
+    def subject(self) -> str: ...
+
     def is_receipt(self) -> bool: ...
 
     def receipt(self) -> Optional[ReceiptBase]: ...
@@ -128,6 +130,7 @@ def aggregate(
     for mail_file in mail_directory.iterdir():
         logger.info('read %s', mail_file.as_posix())
         mail = mail_class.read_file(mail_file, logger=logger)
+        logger.info('subject: %s', mail.subject())
         if not mail.is_receipt():
             logger.info('%s: is not receipt', mail_file.as_posix())
             continue
