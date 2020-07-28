@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+import logging
 import pathlib
 import re
 from typing import List
@@ -95,10 +96,14 @@ def to_gnucach(
 
 
 if __name__ == '__main__':
+    logger = logging.getLogger(__name__)
+    logger.setLevel(logging.WARNING)
+    logger.addHandler(logging.StreamHandler())
     utility.aggregate(
             'bookwalker',
             pathlib.Path('config.yaml'),
             receipt_mail.bookwalker.Mail,
             to_markdown,
             to_gnucach,
-            timezone=pytz.timezone('Asia/Tokyo'))
+            timezone=pytz.timezone('Asia/Tokyo'),
+            logger=logger)

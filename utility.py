@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 import datetime
+import logging
 import pathlib
 import unicodedata
 from typing import (
@@ -11,6 +12,9 @@ import yaml
 
 
 ReceiptT = TypeVar('ReceiptT')
+
+
+logging.getLogger(__name__).addHandler(logging.NullHandler())
 
 
 class ReceiptBase(Protocol):
@@ -24,7 +28,11 @@ class MailT(Protocol):
     def receipt(self) -> Optional[ReceiptBase]: ...
 
     @classmethod
-    def read_file(cls, path: pathlib.Path) -> 'MailT': ...
+    def read_file(
+            cls,
+            path: pathlib.Path,
+            *,
+            logger: Optional[logging.Logger]) -> 'MailT': ...
 
 
 class MarkdownRow(NamedTuple):
@@ -103,7 +111,10 @@ def aggregate(
         mail_class: Type[MailT],
         to_markdown: Callable[[ReceiptT], MarkdownRecord],
         to_gnucash: Callable[[ReceiptT], GnuCashRecord],
-        timezone: Optional[datetime.tzinfo] = None) -> None:
+        timezone: Optional[datetime.tzinfo] = None,
+        logger: Optional[logging.Logger] = None) -> None:
+    # logger
+    logger = logger or logging.getLogger(__name__)
     # load config YAML
     with config_path.open() as config_file:
         config = yaml.load(
@@ -115,12 +126,17 @@ def aggregate(
     mail_directory = workspace.joinpath('mail')
     receipt_list: List[ReceiptBase] = []
     for mail_file in mail_directory.iterdir():
-        mail = mail_class.read_file(mail_file)
+        logger.info('read %s', mail_file.as_posix())
+        mail = mail_class.read_file(mail_file, logger=logger)
         if not mail.is_receipt():
+            logger.info('%s: is not receipt', mail_file.as_posix())
             continue
         receipt = mail.receipt()
         if receipt is not None:
+            logger.info('%s: %s', mail_file.as_posix(), repr(receipt))
             receipt_list.append(receipt)
+        else:
+            logger.warning('%s: failed to parse receipt', mail_file.as_posix())
     receipt_list.sort(key=lambda x: x.purchased_date)
     # markdown
     write_markdown(
