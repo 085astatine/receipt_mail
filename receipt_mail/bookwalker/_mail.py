@@ -3,6 +3,7 @@
 import datetime
 import enum
 import re
+import textwrap
 from typing import List, NamedTuple, Optional, Tuple
 import pytz
 from .._mail import Mail as MailBase
@@ -75,33 +76,47 @@ class Mail(MailBase):
         return ReceiptType.NONE
 
     def receipt(self) -> Optional[Receipt]:
+        if self.is_multipart():
+            self.logger.error('multipart mail')
+        self.logger.debug('text:\n%s', textwrap.indent(self.text(), '    '))
         order = self.order()
+        self.logger.debug(
+                'order:\n%s',
+                textwrap.indent(str(order), '    '))
         if order:
             # type
             type_ = self.receipt_type()
-            assert type_ != ReceiptType.NONE
+            self.logger.debug('receipt type: %s', type_.name)
+            if type_ == ReceiptType.NONE:
+                self.logger.error('receipt type is None')
             # item
             items = _get_item(order)
             # discount
             discount = _get_jpy(order, 'Coupon Discount')
             if discount is None:
                 discount = 0
+            self.logger.debug('discount: %d', discount)
             # tax
             tax = _get_jpy(order, 'Tax')
             if tax is None:
                 tax = 0
+            self.logger.debug('tax: %d', tax)
             # coin usage
             coin_usage = _get_jpy(order, r'Coin Usage \(1 Coin = JPY 1\)')
             if coin_usage is None:
                 coin_usage = 0
+            self.logger.debug('coin usage: %d', coin_usage)
             # purchased date
             purchased_date = _get_purchased_date(order)
             if purchased_date is None:
                 purchased_date = self.date()
+            self.logger.debug('purchased date: %s', purchased_date)
             # granted coin
             granted_coin = _get_granted_coin(
                     order,
                     purchased_date)
+            self.logger.debug('granted coin: %s', granted_coin)
+            # receipt
             result = Receipt(
                     type=type_,
                     items=tuple(items),
@@ -112,12 +127,23 @@ class Mail(MailBase):
                     purchased_date=purchased_date)
             # total amount
             total_amount = _get_jpy(order, 'Total Amount')
-            if total_amount is not None:
-                assert result.total_amount() == total_amount
+            self.logger.debug('total ammount: %s', total_amount)
+            if (total_amount is not None
+                    and result.total_amount() != total_amount):
+                self.logger.error(
+                        'total amount mismatch: %d(mail) & %d(result)',
+                        total_amount,
+                        result.total_amount())
             # total payment
             total_payment = _get_jpy(order, 'Total Payment')
-            assert result.total_payment() == total_payment
+            self.logger.debug('total payment: %s', total_payment)
+            if result.total_payment() != total_payment:
+                self.logger.error(
+                        'total payment mismatch: %d(mail) & %d(result)',
+                        total_payment,
+                        result.total_payment())
             return result
+        self.logger.error('order is not found')
         return None
 
 
