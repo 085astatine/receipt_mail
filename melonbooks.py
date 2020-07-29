@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 
+import logging
 import pathlib
 from typing import List
 import pytz
@@ -72,10 +73,14 @@ def to_gnucash(
 
 
 if __name__ == '__main__':
+    logger = logging.getLogger(__name__)
+    logger.setLevel(logging.WARNING)
+    logger.addHandler(logging.StreamHandler())
     utility.aggregate(
             'melonbooks',
             pathlib.Path('config.yaml'),
             receipt_mail.melonbooks.Mail,
             to_markdown,
             to_gnucash,
-            timezone=pytz.timezone('Asia/Tokyo'))
+            timezone=pytz.timezone('Asia/Tokyo'),
+            logger=logger)

@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+import logging
 import pathlib
 import re
 from typing import List
@@ -59,10 +60,14 @@ def to_gnucash(
 
 
 if __name__ == '__main__':
+    logger = logging.getLogger(__name__)
+    logger.setLevel(logging.WARNING)
+    logger.addHandler(logging.StreamHandler())
     utility.aggregate(
             'yodobashi',
             pathlib.Path('config.yaml'),
             receipt_mail.yodobashi.Mail,
             to_markdown,
             to_gnucash,
-            timezone=pytz.timezone('Asia/Tokyo'))
+            timezone=pytz.timezone('Asia/Tokyo'),
+            logger=logger)
