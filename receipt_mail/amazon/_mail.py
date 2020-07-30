@@ -2,6 +2,7 @@
 
 import datetime
 import re
+import textwrap
 from typing import List, NamedTuple, Optional, Tuple
 from .._mail import Mail as MailBase
 
@@ -31,22 +32,49 @@ class Mail(MailBase):
         return bool(re.match(pattern, self.subject()))
 
     def receipt(self) -> Optional[Receipt]:
+        self.logger.debug(
+                'structure:\n%s',
+                textwrap.indent(self.structure(), '  '))
+        for i, text in enumerate(self.text_list()):
+            self.logger.debug('text %d:\n%s', i, textwrap.indent(text, '    '))
         order = self.order()
+        self.logger.debug('order:\n%s', textwrap.indent(str(order), '    '))
         if order:
+            # order
             order_id = _order_id(order)
+            self.logger.debug('order id: %s', order_id)
+            # item list
             item_list = _item_list(order)
+            self.logger.debug('item list: %s', item_list)
+            if not item_list:
+                self.logger.error('item list is empty')
+            # shipping
+            shipping = _shipping(order)
+            self.logger.debug('shipping: %d', shipping)
+            # discount
+            discount = _discount(order)
+            self.logger.debug('discount: %d', discount)
+            # receipt
             receipt = Receipt(
                     order_id=order_id,
                     items=tuple(item_list),
-                    shipping=_shipping(order),
-                    discount=_discount(order),
+                    shipping=shipping,
+                    discount=discount,
                     purchased_date=self.date())
-            assert receipt.items
-            assert receipt.total_payment() == _total_payment(order)
+            # total payment
+            if receipt.total_payment() != _total_payment(order):
+                self.logger.error(
+                        'total payment is mismatch: %d(mail) & %d(result)',
+                        _total_payment(order),
+                        receipt.total_payment())
             return receipt
+        self.logger.warning('order is not found')
         return None
 
     def order(self) -> Optional[str]:
+        if len(self.text_list()) != 1:
+            self.logger.error('mail has multiple text/plain')
+            return None
         match = re.search(
                 r'=+\n'
                 r'\n'
