@@ -35,7 +35,7 @@ class Mail:
 
     def text_list(self) -> List[str]:
         return [part.get_content() for part in self._mail.walk()
-                if not part.is_multipart()]
+                if part.get_content_type() == 'text/plain']
 
     def structure(
             self,
