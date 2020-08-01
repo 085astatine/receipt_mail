@@ -2,7 +2,7 @@
 
 import datetime
 import re
-from typing import List, NamedTuple, Optional, Tuple
+from typing import List, NamedTuple, Tuple
 from .._mail import Mail as MailBase
 
 
@@ -33,7 +33,8 @@ class Mail(MailBase):
         pattern = '【メロンブックス／フロマージュブックス】 ご注文の確認'
         return self.subject() == pattern
 
-    def receipt(self) -> Optional[Receipt]:
+    def receipt(self) -> List[Receipt]:
+        result: List[Receipt] = []
         if self.is_receipt():
             text = self.text()
             receipt = Receipt(
@@ -46,8 +47,8 @@ class Mail(MailBase):
                 purchased_date=self.date())
             assert receipt.items
             assert receipt.total_payment() == _price('合計額', text)
-            return receipt
-        return None
+            result.append(receipt)
+        return result
 
 
 def _order_id(text: str) -> int:

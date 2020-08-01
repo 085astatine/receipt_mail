@@ -31,7 +31,8 @@ class Mail(MailBase):
         pattern = r'Amazon.co.jp ご注文の確認'
         return bool(re.match(pattern, self.subject()))
 
-    def receipt(self) -> Optional[Receipt]:
+    def receipt(self) -> List[Receipt]:
+        result: List[Receipt] = []
         self.logger.debug(
                 'structure:\n%s',
                 textwrap.indent(self.structure(), '  '))
@@ -67,9 +68,10 @@ class Mail(MailBase):
                         'total payment is mismatch: %d(mail) & %d(result)',
                         _total_payment(order),
                         receipt.total_payment())
-            return receipt
-        self.logger.warning('order is not found')
-        return None
+            result.append(receipt)
+        else:
+            self.logger.warning('order is not found')
+        return result
 
     def order(self) -> Optional[str]:
         if len(self.text_list()) != 1:
