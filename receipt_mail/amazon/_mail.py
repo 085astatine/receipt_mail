@@ -38,9 +38,11 @@ class Mail(MailBase):
                 textwrap.indent(self.structure(), '  '))
         for i, text in enumerate(self.text_list()):
             self.logger.debug('text %d:\n%s', i, textwrap.indent(text, '    '))
-        order = self.order()
-        self.logger.debug('order:\n%s', textwrap.indent(str(order), '    '))
-        if order:
+        for i, order in enumerate(self.order()):
+            self.logger.debug(
+                    'order %d:\n%s',
+                    i,
+                    textwrap.indent(str(order), '    '))
             # order
             order_id = _order_id(order)
             self.logger.debug('order id: %s', order_id)
@@ -69,26 +71,28 @@ class Mail(MailBase):
                         _total_payment(order),
                         receipt.total_payment())
             result.append(receipt)
-        else:
+        if not result:
             self.logger.warning('order is not found')
         return result
 
-    def order(self) -> Optional[str]:
-        if len(self.text_list()) != 1:
-            self.logger.error('mail has multiple text/plain')
-            return None
-        match = re.search(
+    def order(self) -> List[str]:
+        result: List[str] = []
+        if not self.text_list():
+            self.logger.warning('mail has not text/plain')
+        pattern = re.compile(
                 r'=+\n'
                 r'\n'
                 r'注文内容\n'
                 r'.+'
                 r'=+\n',
-                self.text_list()[0].replace('\r\n', '\n'),
                 flags=re.DOTALL)
-        if match:
-            result = match.group()
-            return result
-        return None
+        for text in map(lambda x: x.replace('\r\n', '\n'), self.text_list()):
+            match = pattern.search(text)
+            while match:
+                text = pattern.sub('', text, count=1)
+                result.append(match.group())
+                match = pattern.search(text)
+        return result
 
 
 def _order_id(order: str) -> str:
