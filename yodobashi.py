@@ -28,6 +28,14 @@ def to_markdown(
         row_list.append(utility.MarkdownRow(
                 name=name,
                 price=item.price))
+    if receipt.shipping != 0:
+        row_list.append(utility.MarkdownRow(
+                name='送料',
+                price=receipt.shipping))
+    if receipt.used_point != 0:
+        row_list.append(utility.MarkdownRow(
+                name='ゴールドポイント',
+                price=-receipt.used_point))
     return utility.MarkdownRecord(
             description='yodobashi.com',
             row_list=tuple(row_list))
@@ -50,6 +58,10 @@ def to_gnucash(
     row_list.append(utility.GnuCashRow(
             account='payment',
             value=-receipt.total_payment()))
+    if receipt.used_point != 0:
+        row_list.append(utility.GnuCashRow(
+                account='point',
+                value=-receipt.used_point))
     if receipt.granted_point != 0:
         row_list.append(utility.GnuCashRow(
                 account='granted point',
