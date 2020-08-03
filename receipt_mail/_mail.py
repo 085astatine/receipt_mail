@@ -35,7 +35,29 @@ class Mail:
 
     def text_list(self) -> List[str]:
         return [part.get_content() for part in self._mail.walk()
-                if not part.is_multipart()]
+                if part.get_content_type() == 'text/plain']
+
+    def structure(
+            self,
+            indent: str = '    ',
+            include_default: bool = False) -> str:
+        result: List[str] = []
+
+        def _structure(
+                message: email.message.EmailMessage,
+                level: int,
+                include_default: bool) -> None:
+            result.append('{0}{1}{2}'.format(
+                    indent * level,
+                    message.get_content_type(),
+                    ' [{0}]'.format(message.get_default_type())
+                    if include_default else ''))
+            if message.is_multipart():
+                for subpart in message.get_payload():
+                    _structure(subpart, level + 1, include_default)
+
+        _structure(self._mail, 0, include_default)
+        return '\n'.join(result)
 
     def date(self) -> datetime.datetime:
         return self._mail.get('Date').datetime

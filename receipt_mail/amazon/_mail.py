@@ -2,6 +2,7 @@
 
 import datetime
 import re
+import textwrap
 from typing import List, NamedTuple, Optional, Tuple
 from .._mail import Mail as MailBase
 
@@ -30,35 +31,68 @@ class Mail(MailBase):
         pattern = r'Amazon.co.jp ご注文の確認'
         return bool(re.match(pattern, self.subject()))
 
-    def receipt(self) -> Optional[Receipt]:
-        order = self.order()
-        if order:
+    def receipt(self) -> List[Receipt]:
+        result: List[Receipt] = []
+        self.logger.debug(
+                'structure:\n%s',
+                textwrap.indent(self.structure(), '  '))
+        for i, text in enumerate(self.text_list()):
+            self.logger.debug('text %d:\n%s', i, textwrap.indent(text, '    '))
+        for i, order in enumerate(self.order()):
+            self.logger.debug(
+                    'order %d:\n%s',
+                    i,
+                    textwrap.indent(str(order), '    '))
+            # order
             order_id = _order_id(order)
+            self.logger.debug('order id: %s', order_id)
+            # item list
             item_list = _item_list(order)
+            self.logger.debug('item list: %s', item_list)
+            if not item_list:
+                self.logger.error('item list is empty')
+            # shipping
+            shipping = _shipping(order)
+            self.logger.debug('shipping: %d', shipping)
+            # discount
+            discount = _discount(order)
+            self.logger.debug('discount: %d', discount)
+            # receipt
             receipt = Receipt(
                     order_id=order_id,
                     items=tuple(item_list),
-                    shipping=_shipping(order),
-                    discount=_discount(order),
+                    shipping=shipping,
+                    discount=discount,
                     purchased_date=self.date())
-            assert receipt.items
-            assert receipt.total_payment() == _total_payment(order)
-            return receipt
-        return None
+            # total payment
+            if receipt.total_payment() != _total_payment(order):
+                self.logger.error(
+                        'total payment is mismatch: %d(mail) & %d(result)',
+                        _total_payment(order),
+                        receipt.total_payment())
+            result.append(receipt)
+        if not result:
+            self.logger.warning('order is not found')
+        return result
 
-    def order(self) -> Optional[str]:
-        match = re.search(
+    def order(self) -> List[str]:
+        result: List[str] = []
+        if not self.text_list():
+            self.logger.warning('mail has not text/plain')
+        pattern = re.compile(
                 r'=+\n'
-                r'\n'
-                r'注文内容\n'
-                r'.+'
-                r'=+\n',
-                self.text_list()[0].replace('\r\n', '\n'),
+                r'.+?'
+                r'注文番号：\s*[0-9-]+\s*\n'
+                r'.+?'
+                r'(?==+\n)',
                 flags=re.DOTALL)
-        if match:
-            result = match.group()
-            return result
-        return None
+        for text in map(lambda x: x.replace('\r\n', '\n'), self.text_list()):
+            match = pattern.search(text)
+            while match:
+                text = pattern.sub('', text, count=1)
+                result.append(match.group())
+                match = pattern.search(text)
+        return result
 
 
 def _order_id(order: str) -> str:
@@ -73,8 +107,8 @@ def _order_id(order: str) -> str:
 def _extract_item_list(order: str) -> Optional[str]:
     match = re.search(
             r'=+\n'
-            r'\n'
-            r'注文内容\n'
+            r'.+?'
+            r'注文番号：\s*[0-9-]+\s*\n'
             r'(?P<item_list>.+?)'
             r'_+\n',
             order,

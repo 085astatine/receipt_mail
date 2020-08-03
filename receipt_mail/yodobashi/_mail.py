@@ -13,7 +13,7 @@ class Item(NamedTuple):
 
 
 class Receipt(NamedTuple):
-    items: Tuple[Item]
+    items: Tuple[Item, ...]
     shipping: int
     granted_point: int
     purchased_date: datetime.datetime
@@ -27,7 +27,8 @@ class Mail(MailBase):
         pattern = 'ヨドバシ・ドット・コム：ご注文ありがとうございます'
         return self.subject() == pattern
 
-    def receipt(self):
+    def receipt(self) -> List[Receipt]:
+        result: List[Receipt] = []
         text = self.text_list()[0]
         order = _extract_item_list(text)
         if order:
@@ -39,8 +40,8 @@ class Mail(MailBase):
                     shipping=shipping,
                     granted_point=granted_point,
                     purchased_date=self.date())
-            return receipt
-        return None
+            result.append(receipt)
+        return result
 
 
 def _extract_item_list(text: str) -> Optional[str]:

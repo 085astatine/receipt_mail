@@ -75,9 +75,11 @@ class Mail(MailBase):
             return ReceiptType.ORDER
         return ReceiptType.NONE
 
-    def receipt(self) -> Optional[Receipt]:
+    def receipt(self) -> List[Receipt]:
+        result: List[Receipt] = []
         if self.is_multipart():
             self.logger.error('multipart mail')
+            return result
         self.logger.debug('text:\n%s', textwrap.indent(self.text(), '    '))
         order = self.order()
         self.logger.debug(
@@ -117,7 +119,7 @@ class Mail(MailBase):
                     purchased_date)
             self.logger.debug('granted coin: %s', granted_coin)
             # receipt
-            result = Receipt(
+            receipt = Receipt(
                     type=type_,
                     items=tuple(items),
                     discount=discount,
@@ -129,22 +131,23 @@ class Mail(MailBase):
             total_amount = _get_jpy(order, 'Total Amount')
             self.logger.debug('total ammount: %s', total_amount)
             if (total_amount is not None
-                    and result.total_amount() != total_amount):
+                    and receipt.total_amount() != total_amount):
                 self.logger.error(
-                        'total amount mismatch: %d(mail) & %d(result)',
+                        'total amount mismatch: %d(mail) & %d(receipt)',
                         total_amount,
-                        result.total_amount())
+                        receipt.total_amount())
             # total payment
             total_payment = _get_jpy(order, 'Total Payment')
             self.logger.debug('total payment: %s', total_payment)
-            if result.total_payment() != total_payment:
+            if receipt.total_payment() != total_payment:
                 self.logger.error(
-                        'total payment mismatch: %d(mail) & %d(result)',
+                        'total payment mismatch: %d(mail) & %d(receipt)',
                         total_payment,
-                        result.total_payment())
-            return result
-        self.logger.error('order is not found')
-        return None
+                        receipt.total_payment())
+            result.append(receipt)
+        else:
+            self.logger.error('order is not found')
+        return result
 
 
 def _get_item(text: str) -> List[Item]:

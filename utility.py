@@ -22,12 +22,12 @@ class ReceiptBase(Protocol):
     def purchased_date(self) -> datetime.datetime: ...
 
 
-class MailT(Protocol):
+class MailT(Protocol[ReceiptT]):
     def subject(self) -> str: ...
 
     def is_receipt(self) -> bool: ...
 
-    def receipt(self) -> Optional[ReceiptBase]: ...
+    def receipt(self) -> List[ReceiptT]: ...
 
     @classmethod
     def read_file(
@@ -110,7 +110,7 @@ def write_gnucash_csv(
 def aggregate(
         category: str,
         config_path: pathlib.Path,
-        mail_class: Type[MailT],
+        mail_class: Type[MailT[ReceiptT]],
         to_markdown: Callable[[ReceiptT], MarkdownRecord],
         to_gnucash: Callable[[ReceiptT], GnuCashRecord],
         timezone: Optional[datetime.tzinfo] = None,
@@ -134,8 +134,7 @@ def aggregate(
         if not mail.is_receipt():
             logger.info('%s: is not receipt', mail_file.as_posix())
             continue
-        receipt = mail.receipt()
-        if receipt is not None:
+        for receipt in mail.receipt():
             logger.info('%s: %s', mail_file.as_posix(), repr(receipt))
             receipt_list.append(receipt)
         else:
