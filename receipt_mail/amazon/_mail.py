@@ -81,10 +81,10 @@ class Mail(MailBase):
             self.logger.warning('mail has not text/plain')
         pattern = re.compile(
                 r'=+\n'
-                r'\n'
-                r'注文内容\n'
-                r'.+'
-                r'=+\n',
+                r'.+?'
+                r'注文番号：\s*[0-9-]+\s*\n'
+                r'.+?'
+                r'(?==+\n)',
                 flags=re.DOTALL)
         for text in map(lambda x: x.replace('\r\n', '\n'), self.text_list()):
             match = pattern.search(text)
@@ -107,8 +107,8 @@ def _order_id(order: str) -> str:
 def _extract_item_list(order: str) -> Optional[str]:
     match = re.search(
             r'=+\n'
-            r'\n'
-            r'注文内容\n'
+            r'.+?'
+            r'注文番号：\s*[0-9-]+\s*\n'
             r'(?P<item_list>.+?)'
             r'_+\n',
             order,
