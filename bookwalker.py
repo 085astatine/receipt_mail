@@ -21,6 +21,8 @@ def translate_title(name: str) -> str:
     name = re.sub(r'\(([0-9]+)\)$', r' \g<1>', name)
     # ': N' -> ' N'
     name = re.sub(r': ([0-9]+)$', r' \g<1>', name)
+    # replace continuous space
+    name = re.sub(r'\s+', ' ', name)
     # coin
     coin_match = re.match(
             r'BOOK☆WALKER 期間限定コイン (?P<coin>[0-9,]+)円分',
