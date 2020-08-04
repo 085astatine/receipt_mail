@@ -132,11 +132,14 @@ def aggregate(
         if not mail.is_receipt():
             logger.info('%s: is not receipt', mail_file.as_posix())
             continue
-        for receipt in mail.receipt():
+        receipts = mail.receipt()
+        for receipt in receipts:
             logger.info('%s: %s', mail_file.as_posix(), repr(receipt))
             receipt_list.append(receipt)
-        else:
-            logger.warning('%s: failed to parse receipt', mail_file.as_posix())
+        if not receipts:
+            logger.warning(
+                    '%s: failed to parse as a receipt',
+                    mail_file.as_posix())
     receipt_list.sort(key=lambda x: x.purchased_date)
     # markdown
     write_markdown(
