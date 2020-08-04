@@ -2,6 +2,7 @@
 
 import datetime
 import re
+import textwrap
 from typing import List, NamedTuple, Optional, Tuple
 from .._mail import Mail as MailBase
 
@@ -16,10 +17,13 @@ class Receipt(NamedTuple):
     items: Tuple[Item, ...]
     shipping: int
     granted_point: int
+    used_point: int
     purchased_date: datetime.datetime
 
     def total_payment(self) -> int:
-        return sum(item.price for item in self.items) + self.shipping
+        return (sum(item.price for item in self.items)
+                + self.shipping
+                - self.used_point)
 
 
 class Mail(MailBase):
@@ -29,18 +33,34 @@ class Mail(MailBase):
 
     def receipt(self) -> List[Receipt]:
         result: List[Receipt] = []
-        text = self.text_list()[0]
-        order = _extract_item_list(text)
-        if order:
-            item_list = _item_list(order)
-            shipping = _shipping(order)
-            granted_point = _granted_point(text)
-            receipt = Receipt(
-                    items=tuple(item_list),
-                    shipping=shipping,
-                    granted_point=granted_point,
-                    purchased_date=self.date())
-            result.append(receipt)
+        self.logger.debug(
+            'structure:\n%s',
+            textwrap.indent(self.structure(), '    '))
+        for i, text in enumerate(self.text_list()):
+            self.logger.debug('text %d:\n%s', i, textwrap.indent(text, '    '))
+            order = _extract_item_list(text)
+            if order:
+                self.logger.debug('order:\n%s', textwrap.indent(order, '    '))
+                # item list
+                item_list = _item_list(order)
+                self.logger.debug('item list: %s', item_list)
+                # shipping
+                shipping = _shipping(order)
+                self.logger.debug('shipping: %d', shipping)
+                # used point
+                used_point = _used_point(text)
+                self.logger.debug('used point: %d', used_point)
+                # granted point
+                granted_point = _granted_point(text)
+                self.logger.debug('granted point: %d', granted_point)
+                # receipt
+                receipt = Receipt(
+                        items=tuple(item_list),
+                        shipping=shipping,
+                        granted_point=granted_point,
+                        used_point=used_point,
+                        purchased_date=self.date())
+                result.append(receipt)
         return result
 
 
@@ -82,6 +102,15 @@ def _shipping(text: str) -> int:
     if match:
         text = regex.sub('', text, count=1)
         return int(match.group('price').replace(',', ''))
+    return 0
+
+
+def _used_point(text: str) -> int:
+    match = re.search(
+            r'ゴールドポイントでのお支払い\s+(?P<point>[0-9.]+)\s+円',
+            text)
+    if match:
+        return int(match.group('point').replace(',', ''))
     return 0
 
 
