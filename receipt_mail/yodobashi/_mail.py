@@ -65,12 +65,13 @@ class Mail(MailBase):
 
 
 def _extract_item_list(text: str) -> Optional[str]:
-    pattern = (
+    match = re.search(
             r'【ご注文商品】\n'
             r'-+\n'
             r'(?P<item_list>.+)\n'
-            r'【お支払方法】')
-    match = re.search(pattern, text, flags=re.DOTALL)
+            r'【お支払方法】',
+            text,
+            flags=re.DOTALL)
     if match:
         return match.group('item_list')
     return None
@@ -95,12 +96,11 @@ def _item_list(text: str) -> List[Item]:
 
 
 def _shipping(text: str) -> int:
-    regex = re.compile(
+    match = re.search(
             r'・配達料金：\s*(?P<price>[0-9,]+) 円',
+            text,
             flags=re.DOTALL)
-    match = regex.search(text)
     if match:
-        text = regex.sub('', text, count=1)
         return int(match.group('price').replace(',', ''))
     return 0
 
@@ -115,8 +115,9 @@ def _used_point(text: str) -> int:
 
 
 def _granted_point(text: str) -> int:
-    pattern = r'今回の還元ゴールドポイント数\s+(?P<point>[0-9,]+) ポイント'
-    match = re.search(pattern, text)
+    match = re.search(
+            r'今回の還元ゴールドポイント数\s+(?P<point>[0-9,]+) ポイント',
+            text)
     if match:
         return int(match.group('point').replace(',', ''))
     return 0
