@@ -76,7 +76,7 @@ def _extract_item_list(text: str) -> Optional[str]:
     return None
 
 
-def _item_list(text) -> List[Item]:
+def _item_list(text: str) -> List[Item]:
     result: List[Item] = []
     regex = re.compile(
             r'・「(?P<name>.+?)」\n'
@@ -114,7 +114,7 @@ def _used_point(text: str) -> int:
     return 0
 
 
-def _granted_point(text) -> int:
+def _granted_point(text: str) -> int:
     pattern = r'今回の還元ゴールドポイント数\s+(?P<point>[0-9,]+) ポイント'
     match = re.search(pattern, text)
     if match:
