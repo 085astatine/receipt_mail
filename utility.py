@@ -57,18 +57,16 @@ def write_markdown(
         for receipt in receipt_list:
             data = to_markdown(cast(ReceiptT, receipt))
             time = receipt.purchased_date.astimezone(tz=timezone)
-            is_head = True
             if last_date is None or last_date != time.date():
                 last_date = time.date()
                 f.write('#{0}\n'.format(last_date.strftime("%Y/%m/%d")))
-            for row in data.row_list:
+            for i, row in enumerate(data.row_list):
                 f.write('|{0}|{1}|{2}|{3}|{4}|\n'.format(
-                        '{0}'.format(time.day) if is_head else '',
-                        time.strftime('%H:%M') if is_head else '',
-                        data.description if is_head else '',
+                        '{0}'.format(time.day) if i == 0 else '',
+                        time.strftime('%H:%M') if i == 0 else '',
+                        data.description if i == 0 else '',
                         row.name,
                         row.price))
-                is_head = False
 
 
 class GnuCashRow(NamedTuple):
