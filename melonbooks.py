@@ -75,7 +75,10 @@ def to_gnucash(
 if __name__ == '__main__':
     logger = logging.getLogger(__name__)
     logger.setLevel(logging.WARNING)
-    logger.addHandler(logging.StreamHandler())
+    handler = logging.StreamHandler()
+    handler.formatter = logging.Formatter(
+                fmt='%(name)s::%(levelname)s::%(message)s')
+    logger.addHandler(handler)
     utility.aggregate(
             'melonbooks',
             pathlib.Path('config.yaml'),
