@@ -45,6 +45,10 @@ def to_markdown(
         row_list.append(utility.MarkdownRow(
                 name=name,
                 price=item.price))
+    if receipt.discount != 0:
+        row_list.append(utility.MarkdownRow(
+                name='クーポン割引',
+                price=receipt.discount))
     if receipt.tax != 0:
         row_list.append(utility.MarkdownRow(
                 name='消費税',
