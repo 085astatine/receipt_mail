@@ -4,7 +4,7 @@
 import logging
 import pathlib
 import re
-from typing import List
+from typing import List, Optional
 import pytz
 import receipt_mail.yodobashi
 import utility
@@ -19,7 +19,10 @@ def translate_name(name: str) -> str:
 
 
 def to_markdown(
-        receipt: receipt_mail.yodobashi.Receipt) -> utility.MarkdownRecord:
+        receipt: receipt_mail.yodobashi.Receipt,
+        *,
+        logger: Optional[logging.Logger] = None) -> utility.MarkdownRecord:
+    logger = logger or logging.getLogger(__name__)
     row_list: List[utility.MarkdownRow] = []
     for item in receipt.items:
         name = translate_name(item.name)
