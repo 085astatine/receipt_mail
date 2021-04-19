@@ -45,7 +45,10 @@ def to_markdown(
 
 
 def to_gnucash(
-        receipt: receipt_mail.yodobashi.Receipt) -> utility.GnuCashRecord:
+        receipt: receipt_mail.yodobashi.Receipt,
+        *,
+        logger: Optional[logging.Logger] = None) -> utility.GnuCashRecord:
+    logger = logger or logging.getLogger(__name__)
     row_list: List[utility.GnuCashRow] = []
     row_list.append(utility.GnuCashRow(
             account='item',

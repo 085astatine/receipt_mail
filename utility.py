@@ -85,15 +85,21 @@ class GnuCashRecord(NamedTuple):
     row_list: Tuple[GnuCashRow, ...]
 
 
+ToGnuCash = Callable[
+        [ReceiptT, DefaultNamedArg(Optional[logging.Logger], 'logger')],
+        GnuCashRecord]
+
+
 def write_gnucash_csv(
         path: pathlib.Path,
         receipt_list: List[ReceiptBase],
-        to_csv: Callable[[ReceiptT], GnuCashRecord],
-        timezone: Optional[datetime.tzinfo] = None) -> None:
+        to_csv: ToGnuCash,
+        timezone: Optional[datetime.tzinfo] = None,
+        logger: Optional[logging.Logger] = None) -> None:
     with path.open(mode='w') as f:
         last_number: Optional[str] = None
         for receipt in receipt_list:
-            data = to_csv(cast(ReceiptT, receipt))
+            data = to_csv(receipt, logger=logger)
             time = receipt.purchased_date.astimezone(tz=timezone)
             is_head = True
             date = time.strftime('%Y-%m-%d')
@@ -116,7 +122,7 @@ def aggregate(
         config_path: pathlib.Path,
         mail_class: Type[MailT[ReceiptT]],
         to_markdown: ToMarkdown,
-        to_gnucash: Callable[[ReceiptT], GnuCashRecord],
+        to_gnucash: ToGnuCash,
         timezone: Optional[datetime.tzinfo] = None,
         logger: Optional[logging.Logger] = None) -> None:
     # logger

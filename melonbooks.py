@@ -45,7 +45,10 @@ def to_markdown(
 
 
 def to_gnucash(
-        receipt: receipt_mail.melonbooks.Receipt) -> utility.GnuCashRecord:
+        receipt: receipt_mail.melonbooks.Receipt,
+        *,
+        logger: Optional[logging.Logger] = None) -> utility.GnuCashRecord:
+    logger = logger or logging.getLogger(__name__)
     # date,番号,説明,勘定項目,入金
     row_list: List[utility.GnuCashRow] = []
     row_list.append(utility.GnuCashRow(
