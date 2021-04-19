@@ -5,9 +5,8 @@ import logging
 import pathlib
 import unicodedata
 from typing import (
-        Callable, Dict, List, NamedTuple, Optional, Tuple, Type, TypeVar,
-        Union, cast)
-from typing_extensions import Protocol
+        Callable, Dict, List, NamedTuple, Optional, Protocol, Tuple, Type,
+        TypeVar, Union, cast)
 import yaml
 
 
