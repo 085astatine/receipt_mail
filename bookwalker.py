@@ -15,7 +15,7 @@ def translate_title(name: str) -> str:
     name = utility.fullwidth_to_halfwidth(name)
     name = utility.escape_markdown_symbol(name)
     # remove 【...】
-    name = re.sub(r'【.*?(電子|特典|OFF).*?】', '', name)
+    name = re.sub(r'【[^【】]*(電子|特典|OFF)[^【】]*】', '', name)
     name = name.strip()
     # '(N)' -> ' N'
     name = re.sub(r'\(([0-9]+)\)$', r' \g<1>', name)
