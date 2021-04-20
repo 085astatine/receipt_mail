@@ -67,7 +67,7 @@ def to_gnucash(
 
 
 if __name__ == '__main__':
-    _logger = logging.getLogger(__name__)
+    _logger = logging.getLogger('amazon')
     _logger.setLevel(logging.WARNING)
     handler = logging.StreamHandler()
     handler.formatter = logging.Formatter(

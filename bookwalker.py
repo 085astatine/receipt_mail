@@ -110,7 +110,7 @@ def to_gnucach(
 
 
 if __name__ == '__main__':
-    _logger = logging.getLogger(__name__)
+    _logger = logging.getLogger('bookwalker')
     _logger.setLevel(logging.WARNING)
     handler = logging.StreamHandler()
     handler.formatter = logging.Formatter(

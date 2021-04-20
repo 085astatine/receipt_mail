@@ -50,7 +50,7 @@ def main(*, logger: Optional[logging.Logger] = None) -> None:
 
 
 if __name__ == '__main__':
-    _logger = logging.getLogger(__name__)
+    _logger = logging.getLogger('download')
     _logger.setLevel(logging.INFO)
     handler = logging.StreamHandler()
     handler.formatter = logging.Formatter(
