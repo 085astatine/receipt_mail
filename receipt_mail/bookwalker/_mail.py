@@ -139,7 +139,8 @@ class Mail(MailBase):
             # total payment
             total_payment = _get_jpy(order, 'Total Payment')
             self.logger.debug('total payment: %s', total_payment)
-            if receipt.total_payment() != total_payment:
+            if (total_payment is not None
+                    and receipt.total_payment() != total_payment):
                 self.logger.error(
                         'total payment mismatch: %d(mail) & %d(receipt)',
                         total_payment,
