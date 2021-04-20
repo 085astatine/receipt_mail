@@ -43,6 +43,8 @@ def to_markdown(
     row_list: List[utility.MarkdownRow] = []
     for item in receipt.items:
         name = translate_title(item.name)
+        if name != item.name:
+            logger.info('title: "%s" -> "%s"', item.name, name)
         if item.piece > 1:
             name += ' x{0}'.format(item.piece)
         row_list.append(utility.MarkdownRow(
