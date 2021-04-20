@@ -4,7 +4,7 @@
 import logging
 import pathlib
 import re
-from typing import List
+from typing import List, Optional
 import pytz
 import receipt_mail.bookwalker
 import utility
@@ -36,10 +36,15 @@ def translate_title(name: str) -> str:
 
 
 def to_markdown(
-        receipt: receipt_mail.bookwalker.Receipt) -> utility.MarkdownRecord:
+        receipt: receipt_mail.bookwalker.Receipt,
+        *,
+        logger: Optional[logging.Logger] = None) -> utility.MarkdownRecord:
+    logger = logger or logging.getLogger(__name__)
     row_list: List[utility.MarkdownRow] = []
     for item in receipt.items:
         name = translate_title(item.name)
+        if name != item.name:
+            logger.info('title: "%s" -> "%s"', item.name, name)
         if item.piece > 1:
             name += ' x{0}'.format(item.piece)
         row_list.append(utility.MarkdownRow(
@@ -63,7 +68,10 @@ def to_markdown(
 
 
 def to_gnucach(
-        receipt: receipt_mail.bookwalker.Receipt) -> utility.GnuCashRecord:
+        receipt: receipt_mail.bookwalker.Receipt,
+        *,
+        logger: Optional[logging.Logger] = None) -> utility.GnuCashRecord:
+    logger = logger or logging.getLogger(__name__)
     row_list: List[utility.GnuCashRow] = []
     description = (
             'BOOK☆WALKER'
@@ -104,12 +112,12 @@ def to_gnucach(
 
 
 if __name__ == '__main__':
-    logger = logging.getLogger(__name__)
-    logger.setLevel(logging.WARNING)
+    _logger = logging.getLogger('bookwalker')
+    _logger.setLevel(logging.WARNING)
     handler = logging.StreamHandler()
     handler.formatter = logging.Formatter(
                 fmt='%(name)s::%(levelname)s::%(message)s')
-    logger.addHandler(handler)
+    _logger.addHandler(handler)
     utility.aggregate(
             'bookwalker',
             pathlib.Path('config.yaml'),
@@ -117,4 +125,4 @@ if __name__ == '__main__':
             to_markdown,
             to_gnucach,
             timezone=pytz.timezone('Asia/Tokyo'),
-            logger=logger)
+            logger=_logger)

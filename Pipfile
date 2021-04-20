@@ -9,7 +9,7 @@ verify_ssl = true
 imapclient = "*"
 pytz = "*"
 pyyaml = "*"
-typing-extensions = "*"
+mypy-extensions = "*"
 
 [requires]
 python_version = "3.9"

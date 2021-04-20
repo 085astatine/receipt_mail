@@ -5,10 +5,10 @@ import logging
 import pathlib
 import unicodedata
 from typing import (
-        Callable, Dict, List, NamedTuple, Optional, Tuple, Type, TypeVar,
-        Union, cast)
-from typing_extensions import Protocol
+        Callable, Dict, List, NamedTuple, Optional, Protocol, Tuple, Type,
+        TypeVar, Union, cast)
 import yaml
+from mypy_extensions import DefaultNamedArg
 
 
 ReceiptT = TypeVar('ReceiptT')
@@ -47,15 +47,21 @@ class MarkdownRecord(NamedTuple):
     row_list: Tuple[MarkdownRow, ...]
 
 
+ToMarkdown = Callable[
+        [ReceiptT, DefaultNamedArg(Optional[logging.Logger], 'logger')],
+        MarkdownRecord]
+
+
 def write_markdown(
         path: pathlib.Path,
         receipt_list: List[ReceiptBase],
-        to_markdown: Callable[[ReceiptT], MarkdownRecord],
+        to_markdown: ToMarkdown,
+        logger: Optional[logging.Logger] = None,
         timezone: Optional[datetime.tzinfo] = None) -> None:
     with path.open(mode='w') as f:
         last_date: Optional[datetime.date] = None
         for receipt in receipt_list:
-            data = to_markdown(cast(ReceiptT, receipt))
+            data = to_markdown(receipt, logger=logger)
             time = receipt.purchased_date.astimezone(tz=timezone)
             if last_date is None or last_date != time.date():
                 last_date = time.date()
@@ -79,15 +85,21 @@ class GnuCashRecord(NamedTuple):
     row_list: Tuple[GnuCashRow, ...]
 
 
+ToGnuCash = Callable[
+        [ReceiptT, DefaultNamedArg(Optional[logging.Logger], 'logger')],
+        GnuCashRecord]
+
+
 def write_gnucash_csv(
         path: pathlib.Path,
         receipt_list: List[ReceiptBase],
-        to_csv: Callable[[ReceiptT], GnuCashRecord],
-        timezone: Optional[datetime.tzinfo] = None) -> None:
+        to_csv: ToGnuCash,
+        timezone: Optional[datetime.tzinfo] = None,
+        logger: Optional[logging.Logger] = None) -> None:
     with path.open(mode='w') as f:
         last_number: Optional[str] = None
         for receipt in receipt_list:
-            data = to_csv(cast(ReceiptT, receipt))
+            data = to_csv(receipt, logger=logger)
             time = receipt.purchased_date.astimezone(tz=timezone)
             is_head = True
             date = time.strftime('%Y-%m-%d')
@@ -109,8 +121,8 @@ def aggregate(
         category: str,
         config_path: pathlib.Path,
         mail_class: Type[MailT[ReceiptT]],
-        to_markdown: Callable[[ReceiptT], MarkdownRecord],
-        to_gnucash: Callable[[ReceiptT], GnuCashRecord],
+        to_markdown: ToMarkdown,
+        to_gnucash: ToGnuCash,
         timezone: Optional[datetime.tzinfo] = None,
         logger: Optional[logging.Logger] = None) -> None:
     # logger
@@ -146,7 +158,8 @@ def aggregate(
             workspace.joinpath('{0}.md'.format(category)),
             receipt_list,
             to_markdown,
-            timezone=timezone)
+            timezone=timezone,
+            logger=logger)
     # gnucash csv
     write_gnucash_csv(
             workspace.joinpath('{0}.csv'.format(category)),

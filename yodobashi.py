@@ -4,7 +4,7 @@
 import logging
 import pathlib
 import re
-from typing import List
+from typing import List, Optional
 import pytz
 import receipt_mail.yodobashi
 import utility
@@ -19,7 +19,10 @@ def translate_name(name: str) -> str:
 
 
 def to_markdown(
-        receipt: receipt_mail.yodobashi.Receipt) -> utility.MarkdownRecord:
+        receipt: receipt_mail.yodobashi.Receipt,
+        *,
+        logger: Optional[logging.Logger] = None) -> utility.MarkdownRecord:
+    logger = logger or logging.getLogger(__name__)
     row_list: List[utility.MarkdownRow] = []
     for item in receipt.items:
         name = translate_name(item.name)
@@ -42,7 +45,10 @@ def to_markdown(
 
 
 def to_gnucash(
-        receipt: receipt_mail.yodobashi.Receipt) -> utility.GnuCashRecord:
+        receipt: receipt_mail.yodobashi.Receipt,
+        *,
+        logger: Optional[logging.Logger] = None) -> utility.GnuCashRecord:
+    logger = logger or logging.getLogger(__name__)
     row_list: List[utility.GnuCashRow] = []
     row_list.append(utility.GnuCashRow(
             account='item',
@@ -72,12 +78,12 @@ def to_gnucash(
 
 
 if __name__ == '__main__':
-    logger = logging.getLogger(__name__)
-    logger.setLevel(logging.WARNING)
+    _logger = logging.getLogger('yodobashi')
+    _logger.setLevel(logging.WARNING)
     handler = logging.StreamHandler()
     handler.formatter = logging.Formatter(
                 fmt='%(name)s::%(levelname)s::%(message)s')
-    logger.addHandler(handler)
+    _logger.addHandler(handler)
     utility.aggregate(
             'yodobashi',
             pathlib.Path('config.yaml'),
@@ -85,4 +91,4 @@ if __name__ == '__main__':
             to_markdown,
             to_gnucash,
             timezone=pytz.timezone('Asia/Tokyo'),
-            logger=logger)
+            logger=_logger)
