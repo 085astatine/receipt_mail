@@ -110,12 +110,12 @@ def to_gnucach(
 
 
 if __name__ == '__main__':
-    logger = logging.getLogger(__name__)
-    logger.setLevel(logging.WARNING)
+    _logger = logging.getLogger(__name__)
+    _logger.setLevel(logging.WARNING)
     handler = logging.StreamHandler()
     handler.formatter = logging.Formatter(
                 fmt='%(name)s::%(levelname)s::%(message)s')
-    logger.addHandler(handler)
+    _logger.addHandler(handler)
     utility.aggregate(
             'bookwalker',
             pathlib.Path('config.yaml'),
@@ -123,4 +123,4 @@ if __name__ == '__main__':
             to_markdown,
             to_gnucach,
             timezone=pytz.timezone('Asia/Tokyo'),
-            logger=logger)
+            logger=_logger)

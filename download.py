@@ -50,10 +50,10 @@ def main(*, logger: Optional[logging.Logger] = None) -> None:
 
 
 if __name__ == '__main__':
-    logger = logging.getLogger(__name__)
-    logger.setLevel(logging.INFO)
+    _logger = logging.getLogger(__name__)
+    _logger.setLevel(logging.INFO)
     handler = logging.StreamHandler()
     handler.formatter = logging.Formatter(
                 fmt='%(name)s::%(levelname)s::%(message)s')
-    logger.addHandler(handler)
-    main(logger=logger)
+    _logger.addHandler(handler)
+    main(logger=_logger)
