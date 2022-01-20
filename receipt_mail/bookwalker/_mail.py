@@ -70,7 +70,7 @@ class Mail(MailBase):
                 return ReceiptType.PRE_ORDER
             items = _get_item(order)
             for item in items:
-                if re.match(r'BOOK☆WALKER 期間限定コイン .+', item.name):
+                if re.match(r'BOOK☆WALKER (期間限定)?コイン .+', item.name):
                     return ReceiptType.COIN
             return ReceiptType.ORDER
         return ReceiptType.NONE
@@ -167,7 +167,7 @@ def _get_item(text: str) -> List[Item]:
         book_match = book_regex.search(text)
     # coin
     coin_regex = re.compile(
-            r'■Item\s*[:：]\s*(?P<name>BOOK☆WALKER 期間限定コイン .+)\n'
+            r'■Item\s*[:：]\s*(?P<name>BOOK☆WALKER (期間限定)?コイン .+)\n+'
             r'■Amount\s*[:：]\s*(?P<amount>.+)\n')
     coin_price_regex = re.compile(
             r'■Total Payment\s*[:：]\s*(?P<price>.+)\n')
