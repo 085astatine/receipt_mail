@@ -22,8 +22,8 @@ def translate_title(name: str) -> str:
     name = re.sub(r'\(([0-9]+)\)$', r' \g<1>', name)
     # ': N' -> ' N'
     name = re.sub(r': ([0-9]+)$', r' \g<1>', name)
-    # 'N巻' -> 'N'
-    name = re.sub(r'([0-9]+)巻$', r'\g<1>', name)
+    # '第?N巻' -> 'N'
+    name = re.sub(r'第?([0-9]+)巻$', r'\g<1>', name)
     # replace continuous space
     name = re.sub(r'\s+', ' ', name)
     # coin
