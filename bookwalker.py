@@ -16,14 +16,14 @@ def translate_title(name: str) -> str:
     name = utility.escape_markdown_symbol(name)
     # remove 【...】
     name = re.sub(r'【[^【】]*(電子|特典|OFF)[^【】]*】', '', name)
-    name = re.sub(r'【(期間限定|)([^【】]+セット)】', ' \g<2>', name)
+    name = re.sub(r'【(期間限定|)([^【】]+セット)】', r' \g<2>', name)
     name = name.strip()
     # '(N)' -> ' N'
     name = re.sub(r'\(([0-9]+)\)$', r' \g<1>', name)
     # ': N' -> ' N'
     name = re.sub(r': ([0-9]+)$', r' \g<1>', name)
-    # 'N巻' -> 'N'
-    name = re.sub(r'([0-9]+)巻$', r'\g<1>', name)
+    # '第?N巻' -> 'N'
+    name = re.sub(r'第?([0-9]+)巻$', r'\g<1>', name)
     # replace continuous space
     name = re.sub(r'\s+', ' ', name)
     # coin
