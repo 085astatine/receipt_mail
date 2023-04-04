@@ -167,7 +167,7 @@ def _get_item(text: str) -> List[Item]:
         book_match = book_regex.search(text)
     # coin
     coin_regex = re.compile(
-            r'■Item\s*[:：]\s*(?P<name>BOOK☆WALKER (期間限定)?コイン .+)\n+'
+            r'■Item\s*[:：]\s*(?P<name>BOOK☆WALKER (期間限定)?コイン [0-9,]+円分)[^\n]+\n+'
             r'■Amount\s*[:：]\s*(?P<amount>.+)\n')
     coin_price_regex = re.compile(
             r'■Total Payment\s*[:：]\s*(?P<price>.+)\n')
