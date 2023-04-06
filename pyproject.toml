@@ -1,0 +1,15 @@
+[tool.poetry]
+name = "receipt_mail"
+version = "0.1.0"
+description = ""
+authors = ["085astatine <astatine085@gmail.com>"]
+license = ""
+packages = [{include = "receipt_mail"}]
+
+[tool.poetry.dependencies]
+python = "^3.10"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
